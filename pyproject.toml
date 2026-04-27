@@ -9,7 +9,11 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     # "frappe~=16.0.0" # Installed and managed by bench.
+    "requests>=2.28.0",
 ]
+
+[project.scripts]
+trading_journal = "trading_journal.trading_journal.commands:commands"
 
 [build-system]
 requires = ["flit_core >=3.4,<4"]

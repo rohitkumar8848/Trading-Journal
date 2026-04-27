@@ -1,0 +1,26 @@
+{
+ "charts": [
+  {
+   "chart": "P&L Over Time",
+   "width": "Full"
+  },
+  {
+   "chart": "Win Loss Breakdown",
+   "width": "Half"
+  },
+  {
+   "chart": "Trades by Setup Type",
+   "width": "Half"
+  }
+ ],
+ "cards": [
+  {"card": "Total P&L"},
+  {"card": "Total Trades"},
+  {"card": "Total Wins"}
+ ],
+ "doctype": "Dashboard",
+ "is_default": 0,
+ "is_standard": 1,
+ "module": "Trading Journal",
+ "name": "Trading Journal Dashboard"
+}

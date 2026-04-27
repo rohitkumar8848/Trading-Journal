@@ -1,0 +1,494 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:trade_date",
+ "creation": "2024-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "trade_date",
+  "broker",
+  "status",
+  "plan_title",
+  "col_break_head",
+  "market_bias",
+  "conviction",
+  "market_condition",
+  "tags",
+  "section_market",
+  "nifty_bias",
+  "nifty_support",
+  "nifty_resistance",
+  "col_break_market",
+  "banknifty_bias",
+  "banknifty_support",
+  "banknifty_resistance",
+  "section_news",
+  "global_cues",
+  "news_events",
+  "section_risk",
+  "max_loss_per_day",
+  "max_loss_per_trade",
+  "risk_per_trade_pct",
+  "col_break_risk",
+  "max_trades",
+  "max_open_positions",
+  "min_reward_risk",
+  "section_watchlist",
+  "watchlist",
+  "section_strategy",
+  "focus_setups",
+  "avoid_today",
+  "rules_today",
+  "section_mind",
+  "mental_state",
+  "sleep_hours",
+  "energy_level",
+  "col_break_mind",
+  "pre_market_notes",
+  "section_stats",
+  "total_trades",
+  "wins",
+  "losses",
+  "breakeven_count",
+  "col_break_stats",
+  "total_pnl",
+  "win_rate",
+  "col_break_stats2",
+  "best_trade",
+  "worst_trade",
+  "section_adherence",
+  "plan_adherence",
+  "adherence_score",
+  "hit_daily_loss_limit",
+  "section_review",
+  "day_summary",
+  "lessons_learned",
+  "post_market_notes",
+  "section_trades",
+  "trades",
+  "section_improvements",
+  "improvements"
+ ],
+ "fields": [
+  {
+   "fieldname": "trade_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "broker",
+   "fieldtype": "Link",
+   "label": "Broker / Account",
+   "options": "Broker",
+   "in_standard_filter": 1,
+   "description": "Leave empty to cover all accounts."
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Planned\nExecuted\nSkipped",
+   "default": "Planned",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "plan_title",
+   "fieldtype": "Data",
+   "label": "Plan Title",
+   "description": "Short headline — e.g. 'RBI day, tight stops'."
+  },
+  {
+   "fieldname": "col_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "market_bias",
+   "fieldtype": "Select",
+   "label": "Market Bias",
+   "options": "\nBullish\nBearish\nNeutral\nChoppy\nSideways",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "conviction",
+   "fieldtype": "Select",
+   "label": "Conviction",
+   "options": "\nHigh\nMedium\nLow",
+   "default": "Medium"
+  },
+  {
+   "fieldname": "market_condition",
+   "fieldtype": "Select",
+   "label": "Market Condition (realized)",
+   "options": "\nTrending Up\nTrending Down\nRanging\nHighly Volatile\nLow Volume",
+   "description": "Post-market classification of how the day actually behaved."
+  },
+  {
+   "fieldname": "tags",
+   "fieldtype": "Data",
+   "label": "Tags",
+   "description": "Comma-separated: expiry, earnings, fed, etc."
+  },
+  {
+   "fieldname": "section_market",
+   "fieldtype": "Section Break",
+   "label": "Market Outlook (pre-market)"
+  },
+  {
+   "fieldname": "nifty_bias",
+   "fieldtype": "Select",
+   "label": "Nifty Bias",
+   "options": "\nUp\nDown\nRange"
+  },
+  {
+   "fieldname": "nifty_support",
+   "fieldtype": "Float",
+   "label": "Nifty Support",
+   "precision": "2"
+  },
+  {
+   "fieldname": "nifty_resistance",
+   "fieldtype": "Float",
+   "label": "Nifty Resistance",
+   "precision": "2"
+  },
+  {
+   "fieldname": "col_break_market",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "banknifty_bias",
+   "fieldtype": "Select",
+   "label": "Bank Nifty Bias",
+   "options": "\nUp\nDown\nRange"
+  },
+  {
+   "fieldname": "banknifty_support",
+   "fieldtype": "Float",
+   "label": "Bank Nifty Support",
+   "precision": "2"
+  },
+  {
+   "fieldname": "banknifty_resistance",
+   "fieldtype": "Float",
+   "label": "Bank Nifty Resistance",
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_news",
+   "fieldtype": "Section Break",
+   "label": "Cues & Events",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "global_cues",
+   "fieldtype": "Small Text",
+   "label": "Global Cues",
+   "description": "SGX Nifty, Dow futures, Asian markets, crude, DXY."
+  },
+  {
+   "fieldname": "news_events",
+   "fieldtype": "Small Text",
+   "label": "News / Events",
+   "description": "RBI policy, earnings, expiry, budget, macro data."
+  },
+  {
+   "fieldname": "section_risk",
+   "fieldtype": "Section Break",
+   "label": "Risk Limits for the Day"
+  },
+  {
+   "fieldname": "max_loss_per_day",
+   "fieldtype": "Currency",
+   "label": "Max Loss / Day",
+   "description": "Hard stop — walk away once reached."
+  },
+  {
+   "fieldname": "max_loss_per_trade",
+   "fieldtype": "Currency",
+   "label": "Max Loss / Trade"
+  },
+  {
+   "fieldname": "risk_per_trade_pct",
+   "fieldtype": "Percent",
+   "label": "Risk % per Trade",
+   "description": "% of capital risked on any single trade. Typically 0.5–2%."
+  },
+  {
+   "fieldname": "col_break_risk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "max_trades",
+   "fieldtype": "Int",
+   "label": "Max Trades Today"
+  },
+  {
+   "fieldname": "max_open_positions",
+   "fieldtype": "Int",
+   "label": "Max Open Positions"
+  },
+  {
+   "fieldname": "min_reward_risk",
+   "fieldtype": "Float",
+   "label": "Min R:R Accepted",
+   "precision": "2",
+   "description": "Skip any setup with R:R below this."
+  },
+  {
+   "fieldname": "section_watchlist",
+   "fieldtype": "Section Break",
+   "label": "Watchlist"
+  },
+  {
+   "fieldname": "watchlist",
+   "fieldtype": "Table",
+   "label": "Watchlist",
+   "options": "Trading Day Watchlist"
+  },
+  {
+   "fieldname": "section_strategy",
+   "fieldtype": "Section Break",
+   "label": "Strategy",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "focus_setups",
+   "fieldtype": "Small Text",
+   "label": "Focus Setups",
+   "description": "Which setups am I hunting today?"
+  },
+  {
+   "fieldname": "avoid_today",
+   "fieldtype": "Small Text",
+   "label": "Avoid Today",
+   "description": "What am I NOT trading today?"
+  },
+  {
+   "fieldname": "rules_today",
+   "fieldtype": "Small Text",
+   "label": "Rules for Today"
+  },
+  {
+   "fieldname": "section_mind",
+   "fieldtype": "Section Break",
+   "label": "Mental State (pre-market)",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "mental_state",
+   "fieldtype": "Select",
+   "label": "Mental State",
+   "options": "\nFocused\nConfident\nNeutral\nTired\nAnxious\nDistracted\nFOMO"
+  },
+  {
+   "fieldname": "sleep_hours",
+   "fieldtype": "Float",
+   "label": "Sleep (hours)",
+   "precision": "1"
+  },
+  {
+   "fieldname": "energy_level",
+   "fieldtype": "Int",
+   "label": "Energy (1-10)"
+  },
+  {
+   "fieldname": "col_break_mind",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pre_market_notes",
+   "fieldtype": "Small Text",
+   "label": "Pre-Market Notes",
+   "description": "Biases, feelings, distractions."
+  },
+  {
+   "fieldname": "section_stats",
+   "fieldtype": "Section Break",
+   "label": "Performance (auto)",
+   "description": "Pulled from Trade records closed on this date."
+  },
+  {
+   "fieldname": "total_trades",
+   "fieldtype": "Int",
+   "label": "Total Trades",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "wins",
+   "fieldtype": "Int",
+   "label": "Wins",
+   "read_only": 1
+  },
+  {
+   "fieldname": "losses",
+   "fieldtype": "Int",
+   "label": "Losses",
+   "read_only": 1
+  },
+  {
+   "fieldname": "breakeven_count",
+   "fieldtype": "Int",
+   "label": "Breakeven",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_stats",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_pnl",
+   "fieldtype": "Currency",
+   "label": "Total P&L",
+   "read_only": 1,
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "win_rate",
+   "fieldtype": "Percent",
+   "label": "Win Rate",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_stats2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "best_trade",
+   "fieldtype": "Link",
+   "label": "Best Trade",
+   "options": "Trade",
+   "read_only": 1
+  },
+  {
+   "fieldname": "worst_trade",
+   "fieldtype": "Link",
+   "label": "Worst Trade",
+   "options": "Trade",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_adherence",
+   "fieldtype": "Section Break",
+   "label": "Plan Adherence"
+  },
+  {
+   "fieldname": "plan_adherence",
+   "fieldtype": "Select",
+   "label": "Plan Adherence",
+   "options": "\nFully\nMostly\nPartially\nNot at all"
+  },
+  {
+   "fieldname": "adherence_score",
+   "fieldtype": "Int",
+   "label": "Adherence Score (1-10)"
+  },
+  {
+   "fieldname": "hit_daily_loss_limit",
+   "fieldtype": "Check",
+   "label": "Hit Daily Loss Limit",
+   "default": "0",
+   "description": "Auto-ticks if realized P&L breaches max_loss_per_day."
+  },
+  {
+   "fieldname": "section_review",
+   "fieldtype": "Section Break",
+   "label": "Review & Notes"
+  },
+  {
+   "fieldname": "day_summary",
+   "fieldtype": "Text Editor",
+   "label": "Day Summary"
+  },
+  {
+   "fieldname": "lessons_learned",
+   "fieldtype": "Small Text",
+   "label": "Lessons Learned"
+  },
+  {
+   "fieldname": "post_market_notes",
+   "fieldtype": "Text Editor",
+   "label": "Post-Market Notes"
+  },
+  {
+   "fieldname": "section_trades",
+   "fieldtype": "Section Break",
+   "label": "Trades",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "trades",
+   "fieldtype": "Table",
+   "label": "Trades",
+   "options": "Trading Day Trade"
+  },
+  {
+   "fieldname": "section_improvements",
+   "fieldtype": "Section Break",
+   "label": "Points to Improve",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "improvements",
+   "fieldtype": "Table",
+   "label": "Improvements",
+   "options": "Trade Improvement Note"
+  }
+ ],
+ "icon": "calendar",
+ "idx": 0,
+ "links": [],
+ "modified": "2026-04-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Trading Day",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "trade_date",
+ "sort_order": "DESC",
+ "states": [
+  {"color": "Blue", "title": "Planned"},
+  {"color": "Green", "title": "Executed"},
+  {"color": "Gray", "title": "Skipped"}
+ ],
+ "title_field": "trade_date",
+ "track_changes": 1
+}

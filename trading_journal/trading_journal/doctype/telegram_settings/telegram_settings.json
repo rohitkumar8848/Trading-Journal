@@ -1,0 +1,42 @@
+{
+ "actions": [],
+ "creation": "2026-04-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "issingle": 1,
+ "field_order": [
+  "enabled",
+  "bot_token",
+  "chat_id",
+  "section_options",
+  "send_daily_digest",
+  "send_watchlist_alerts",
+  "send_open_trade_alerts",
+  "section_help",
+  "help_html"
+ ],
+ "fields": [
+  {"fieldname": "enabled", "fieldtype": "Check", "label": "Enable Telegram", "default": "0"},
+  {"fieldname": "bot_token", "fieldtype": "Password", "label": "Bot Token", "description": "From @BotFather on Telegram"},
+  {"fieldname": "chat_id", "fieldtype": "Data", "label": "Chat ID", "description": "Your personal chat ID — message @userinfobot to find it"},
+  {"fieldname": "section_options", "fieldtype": "Section Break", "label": "What to Send"},
+  {"fieldname": "send_daily_digest", "fieldtype": "Check", "label": "Daily Screener Digest (after 8 AM scan)", "default": "1"},
+  {"fieldname": "send_watchlist_alerts", "fieldtype": "Check", "label": "Watchlist Pivot Breakout Alerts", "default": "1"},
+  {"fieldname": "send_open_trade_alerts", "fieldtype": "Check", "label": "Open Trade Stop/Target Hit Alerts", "default": "1"},
+  {"fieldname": "section_help", "fieldtype": "Section Break", "label": "Setup"},
+  {"fieldname": "help_html", "fieldtype": "HTML", "options": "<div style='line-height:1.6;font-size:13px;color:#475569;'><b>Setup steps:</b><ol><li>On Telegram, message <b>@BotFather</b> → <code>/newbot</code> → follow prompts → copy the bot token here.</li><li>Search for your new bot in Telegram and send it any message (this opens the chat).</li><li>Message <b>@userinfobot</b> to find your numeric Chat ID. Paste it above.</li><li>Save these settings, then click <b>Test Telegram</b> (Menu → Tools).</li></ol></div>"}
+ ],
+ "links": [],
+ "modified": "2026-04-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Telegram Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {"role": "System Manager", "create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "share": 1, "write": 1}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

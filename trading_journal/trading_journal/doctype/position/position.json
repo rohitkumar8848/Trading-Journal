@@ -1,0 +1,192 @@
+{
+ "actions": [],
+ "autoname": "format:{broker}-{trading_symbol}-{product_type}",
+ "creation": "2026-04-21 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "broker",
+  "trading_symbol",
+  "exchange_segment",
+  "security_id",
+  "product_type",
+  "position_type",
+  "col_1",
+  "net_qty",
+  "buy_qty",
+  "sell_qty",
+  "buy_avg",
+  "sell_avg",
+  "last_traded_price",
+  "section_pnl",
+  "realized_pnl",
+  "unrealized_pnl",
+  "day_buy_value",
+  "day_sell_value",
+  "col_pnl",
+  "is_open",
+  "multiplier",
+  "section_meta",
+  "synced_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "broker",
+   "fieldtype": "Link",
+   "label": "Broker",
+   "options": "Broker",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "trading_symbol",
+   "fieldtype": "Data",
+   "label": "Symbol",
+   "reqd": 1,
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "exchange_segment",
+   "fieldtype": "Data",
+   "label": "Exchange Segment",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "security_id",
+   "fieldtype": "Data",
+   "label": "Security ID"
+  },
+  {
+   "fieldname": "product_type",
+   "fieldtype": "Select",
+   "label": "Product",
+   "options": "\nCNC\nMIS\nNRML\nCO\nBO\nMTF",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "position_type",
+   "fieldtype": "Select",
+   "label": "Position Type",
+   "options": "\nLONG\nSHORT\nCLOSED"
+  },
+  {
+   "fieldname": "col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "net_qty",
+   "fieldtype": "Float",
+   "label": "Net Qty",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "buy_qty",
+   "fieldtype": "Float",
+   "label": "Buy Qty"
+  },
+  {
+   "fieldname": "sell_qty",
+   "fieldtype": "Float",
+   "label": "Sell Qty"
+  },
+  {
+   "fieldname": "buy_avg",
+   "fieldtype": "Currency",
+   "label": "Buy Avg",
+   "precision": "4"
+  },
+  {
+   "fieldname": "sell_avg",
+   "fieldtype": "Currency",
+   "label": "Sell Avg",
+   "precision": "4"
+  },
+  {
+   "fieldname": "last_traded_price",
+   "fieldtype": "Currency",
+   "label": "LTP",
+   "precision": "4"
+  },
+  {
+   "fieldname": "section_pnl",
+   "fieldtype": "Section Break",
+   "label": "P&L"
+  },
+  {
+   "fieldname": "realized_pnl",
+   "fieldtype": "Currency",
+   "label": "Realized P&L"
+  },
+  {
+   "fieldname": "unrealized_pnl",
+   "fieldtype": "Currency",
+   "label": "Unrealized P&L",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "day_buy_value",
+   "fieldtype": "Currency",
+   "label": "Day Buy Value"
+  },
+  {
+   "fieldname": "day_sell_value",
+   "fieldtype": "Currency",
+   "label": "Day Sell Value"
+  },
+  {
+   "fieldname": "col_pnl",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "label": "Is Open",
+   "default": "1"
+  },
+  {
+   "fieldname": "multiplier",
+   "fieldtype": "Float",
+   "label": "Multiplier",
+   "default": "1"
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Sync"
+  },
+  {
+   "fieldname": "synced_at",
+   "fieldtype": "Datetime",
+   "label": "Synced At",
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-crosshairs",
+ "idx": 0,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-04-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Position",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1, "delete": 1, "email": 0, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "System Manager", "share": 0, "write": 1
+  },
+  {
+   "create": 1, "delete": 1, "email": 0, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "All", "share": 0, "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "trading_symbol",
+ "track_changes": 0
+}

@@ -1,0 +1,20 @@
+[
+ {
+  "doctype": "Dashboard",
+  "name": "Trading Journal Dashboard",
+  "dashboard_name": "Trading Journal Dashboard",
+  "module": "Trading Journal",
+  "is_standard": 0,
+  "is_default": 0,
+  "charts": [
+   {"doctype": "Dashboard Chart Link", "chart": "P&L Over Time", "width": "Full"},
+   {"doctype": "Dashboard Chart Link", "chart": "Win Loss Breakdown", "width": "Half"},
+   {"doctype": "Dashboard Chart Link", "chart": "Trades by Setup Type", "width": "Half"}
+  ],
+  "cards": [
+   {"doctype": "Number Card Link", "card": "Total P&L"},
+   {"doctype": "Number Card Link", "card": "Total Trades"},
+   {"doctype": "Number Card Link", "card": "Total Wins"}
+  ]
+ }
+]

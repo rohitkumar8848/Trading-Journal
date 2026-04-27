@@ -1,0 +1,128 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:symbol",
+ "creation": "2024-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "symbol",
+  "company_name",
+  "exchange",
+  "col_break1",
+  "series",
+  "isin",
+  "face_value",
+  "sector",
+  "col_break2",
+  "is_active",
+  "date_of_listing"
+ ],
+ "fields": [
+  {
+   "fieldname": "symbol",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "in_global_search": 1,
+   "label": "Symbol",
+   "reqd": 1,
+   "bold": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "in_global_search": 1,
+   "label": "Company Name",
+   "search_index": 1
+  },
+  {
+   "fieldname": "exchange",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Exchange",
+   "options": "NSE\nBSE\nNSE & BSE",
+   "reqd": 1
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "series",
+   "fieldtype": "Data",
+   "label": "Series"
+  },
+  {
+   "fieldname": "isin",
+   "fieldtype": "Data",
+   "label": "ISIN",
+   "search_index": 1
+  },
+  {
+   "fieldname": "face_value",
+   "fieldtype": "Currency",
+   "label": "Face Value"
+  },
+  {
+   "fieldname": "sector",
+   "fieldtype": "Data",
+   "label": "Sector",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "col_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "date_of_listing",
+   "fieldtype": "Date",
+   "label": "Date of Listing"
+  }
+ ],
+ "icon": "stock",
+ "idx": 0,
+ "links": [],
+ "modified": "2024-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Stock Symbol",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "import": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All"
+  }
+ ],
+ "search_fields": "company_name,isin",
+ "sort_field": "symbol",
+ "sort_order": "ASC",
+ "title_field": "company_name",
+ "track_changes": 0
+}

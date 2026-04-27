@@ -1,0 +1,12 @@
+{
+ "document_type": "Trade",
+ "doctype": "Number Card",
+ "filters_json": "[]",
+ "function": "Count",
+ "is_public": 1,
+ "label": "Total Trades",
+ "module": "Trading Journal",
+ "name": "Total Trades",
+ "show_percentage_stats": 1,
+ "stats_time_interval": "Monthly"
+}

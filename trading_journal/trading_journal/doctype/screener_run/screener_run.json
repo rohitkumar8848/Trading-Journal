@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "autoname": "format:SCRN-{scan_type}-{#####}",
+ "creation": "2026-04-27 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "scan_type",
+  "status",
+  "run_at",
+  "completed_at",
+  "col_break_head",
+  "universe",
+  "total_scanned",
+  "passed_count",
+  "section_progress",
+  "progress_message",
+  "error_message",
+  "section_results",
+  "results"
+ ],
+ "fields": [
+  {
+   "fieldname": "scan_type",
+   "fieldtype": "Select",
+   "label": "Scan Type",
+   "options": "Trend Template\nVCP\nTight Consolidation\nNear 52w High",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Queued\nRunning\nCompleted\nFailed",
+   "default": "Queued",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "run_at",
+   "fieldtype": "Datetime",
+   "label": "Started",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_break_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "universe",
+   "fieldtype": "Data",
+   "label": "Universe",
+   "default": "Nifty 500"
+  },
+  {
+   "fieldname": "total_scanned",
+   "fieldtype": "Int",
+   "label": "Total Scanned",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "passed_count",
+   "fieldtype": "Int",
+   "label": "Passed",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_progress",
+   "fieldtype": "Section Break",
+   "label": "Progress / Errors",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "progress_message",
+   "fieldtype": "Small Text",
+   "label": "Progress Message",
+   "read_only": 1
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Long Text",
+   "label": "Error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_results",
+   "fieldtype": "Section Break",
+   "label": "Results"
+  },
+  {
+   "fieldname": "results",
+   "fieldtype": "Table",
+   "label": "Results",
+   "options": "Screener Result"
+  }
+ ],
+ "icon": "filter",
+ "links": [],
+ "modified": "2026-04-27 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Screener Run",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "run_at",
+ "sort_order": "DESC",
+ "states": [
+  {"color": "Yellow", "title": "Queued"},
+  {"color": "Blue", "title": "Running"},
+  {"color": "Green", "title": "Completed"},
+  {"color": "Red", "title": "Failed"}
+ ],
+ "track_changes": 1
+}

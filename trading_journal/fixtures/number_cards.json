@@ -1,0 +1,42 @@
+[
+ {
+  "doctype": "Number Card",
+  "name": "Total P&L",
+  "label": "Total P&L",
+  "document_type": "Trade",
+  "function": "Sum",
+  "aggregate_function_based_on": "pnl",
+  "filters_json": "[]",
+  "is_public": 1,
+  "module": "Trading Journal",
+  "color": "#2ecc71",
+  "show_percentage_stats": 1,
+  "stats_time_interval": "Monthly"
+ },
+ {
+  "doctype": "Number Card",
+  "name": "Total Trades",
+  "label": "Total Trades",
+  "document_type": "Trade",
+  "function": "Count",
+  "filters_json": "[]",
+  "is_public": 1,
+  "module": "Trading Journal",
+  "color": "#3498db",
+  "show_percentage_stats": 1,
+  "stats_time_interval": "Monthly"
+ },
+ {
+  "doctype": "Number Card",
+  "name": "Total Wins",
+  "label": "Total Wins",
+  "document_type": "Trade",
+  "function": "Count",
+  "filters_json": "[[\"status\",\"=\",\"Win\"]]",
+  "is_public": 1,
+  "module": "Trading Journal",
+  "color": "#27ae60",
+  "show_percentage_stats": 1,
+  "stats_time_interval": "Monthly"
+ }
+]

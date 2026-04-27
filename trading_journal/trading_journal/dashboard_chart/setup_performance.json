@@ -1,0 +1,15 @@
+{
+ "based_on": "setup_type",
+ "chart_name": "Trades by Setup Type",
+ "chart_type": "Count",
+ "color": "#FF5858",
+ "document_type": "Trade",
+ "doctype": "Dashboard Chart",
+ "filters_json": "[]",
+ "group_by_type": "Count",
+ "is_public": 1,
+ "module": "Trading Journal",
+ "name": "Trades by Setup Type",
+ "timeseries": 0,
+ "type": "Bar"
+}

@@ -1,0 +1,12 @@
+{
+ "content": "[]",
+ "doctype": "Page",
+ "module": "Trading Journal",
+ "name": "trade-dashboard",
+ "page_name": "trade-dashboard",
+ "roles": [
+  {"role": "All"}
+ ],
+ "system_page": 0,
+ "title": "Trade Dashboard"
+}

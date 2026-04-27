@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "creation": "2026-04-25 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "istable": 1,
+ "field_order": [
+  "symbol",
+  "direction",
+  "setup",
+  "priority",
+  "entry_zone",
+  "stop_loss",
+  "target",
+  "position_size",
+  "catalyst",
+  "taken",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "symbol",
+   "fieldtype": "Link",
+   "label": "Symbol",
+   "options": "Stock Symbol",
+   "in_list_view": 1,
+   "columns": 2,
+   "reqd": 1
+  },
+  {
+   "fieldname": "direction",
+   "fieldtype": "Select",
+   "label": "Direction",
+   "options": "Long\nShort",
+   "default": "Long",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "setup",
+   "fieldtype": "Select",
+   "label": "Setup",
+   "options": "\nBreakout\nReversal\nTrend Follow\nGap & Go\nOpening Range\nPullback\nScalp\nSwing\nOther",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "label": "Priority",
+   "options": "Medium\nHigh\nLow",
+   "default": "Medium",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "entry_zone",
+   "fieldtype": "Data",
+   "label": "Entry Zone",
+   "description": "e.g. 1250-1260",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "stop_loss",
+   "fieldtype": "Currency",
+   "label": "Stop Loss",
+   "precision": "4",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "target",
+   "fieldtype": "Currency",
+   "label": "Target",
+   "precision": "4",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "position_size",
+   "fieldtype": "Float",
+   "label": "Planned Qty"
+  },
+  {
+   "fieldname": "catalyst",
+   "fieldtype": "Small Text",
+   "label": "Catalyst / Reason"
+  },
+  {
+   "fieldname": "taken",
+   "fieldtype": "Check",
+   "label": "Traded",
+   "description": "Tick after market if you actually took this trade.",
+   "default": "0",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "links": [],
+ "modified": "2026-04-25 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Trading Day Watchlist",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

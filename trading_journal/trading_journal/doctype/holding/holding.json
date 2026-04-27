@@ -1,0 +1,163 @@
+{
+ "actions": [],
+ "allow_import": 0,
+ "autoname": "format:{broker}-{trading_symbol}-{exchange}",
+ "creation": "2026-04-21 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "broker",
+  "trading_symbol",
+  "isin",
+  "exchange",
+  "security_id",
+  "col_1",
+  "total_qty",
+  "available_qty",
+  "avg_cost_price",
+  "last_traded_price",
+  "section_value",
+  "invested_value",
+  "current_value",
+  "col_2",
+  "unrealized_pnl",
+  "pnl_percent",
+  "section_meta",
+  "synced_at"
+ ],
+ "fields": [
+  {
+   "fieldname": "broker",
+   "fieldtype": "Link",
+   "label": "Broker",
+   "options": "Broker",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "trading_symbol",
+   "fieldtype": "Data",
+   "label": "Symbol",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "isin",
+   "fieldtype": "Data",
+   "label": "ISIN",
+   "search_index": 1
+  },
+  {
+   "fieldname": "exchange",
+   "fieldtype": "Data",
+   "label": "Exchange",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "security_id",
+   "fieldtype": "Data",
+   "label": "Security ID"
+  },
+  {
+   "fieldname": "col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_qty",
+   "fieldtype": "Float",
+   "label": "Total Qty",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "available_qty",
+   "fieldtype": "Float",
+   "label": "Available Qty"
+  },
+  {
+   "fieldname": "avg_cost_price",
+   "fieldtype": "Currency",
+   "label": "Avg Cost",
+   "precision": "4"
+  },
+  {
+   "fieldname": "last_traded_price",
+   "fieldtype": "Currency",
+   "label": "LTP",
+   "precision": "4"
+  },
+  {
+   "fieldname": "section_value",
+   "fieldtype": "Section Break",
+   "label": "Valuation"
+  },
+  {
+   "fieldname": "invested_value",
+   "fieldtype": "Currency",
+   "label": "Invested",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_value",
+   "fieldtype": "Currency",
+   "label": "Current Value",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unrealized_pnl",
+   "fieldtype": "Currency",
+   "label": "Unrealized P&L",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "pnl_percent",
+   "fieldtype": "Percent",
+   "label": "P&L %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Sync"
+  },
+  {
+   "fieldname": "synced_at",
+   "fieldtype": "Datetime",
+   "label": "Synced At",
+   "read_only": 1
+  }
+ ],
+ "icon": "fa fa-archive",
+ "idx": 0,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-04-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Holding",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1, "delete": 1, "email": 0, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "System Manager", "share": 0, "write": 1
+  },
+  {
+   "create": 1, "delete": 1, "email": 0, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "All", "share": 0, "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "trading_symbol",
+ "track_changes": 0
+}

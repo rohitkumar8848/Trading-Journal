@@ -1,0 +1,1 @@
+from trading_journal.trading_journal.commands.sync_scrips import commands

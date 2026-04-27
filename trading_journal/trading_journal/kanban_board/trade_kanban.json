@@ -1,0 +1,15 @@
+{
+ "columns": [
+  {"column_name": "Open", "indicator": "Blue"},
+  {"column_name": "Win", "indicator": "Green"},
+  {"column_name": "Loss", "indicator": "Red"},
+  {"column_name": "Breakeven", "indicator": "Yellow"}
+ ],
+ "doctype": "Kanban Board",
+ "field_name": "status",
+ "filters_json": "[]",
+ "meta_filters_json": "[]",
+ "name": "Trade Kanban",
+ "reference_doctype": "Trade",
+ "show_labels": 1
+}

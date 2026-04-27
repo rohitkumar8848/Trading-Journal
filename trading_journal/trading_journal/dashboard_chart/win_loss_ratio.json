@@ -1,0 +1,15 @@
+{
+ "based_on": "status",
+ "chart_name": "Win / Loss Breakdown",
+ "chart_type": "Count",
+ "color": "#28a745",
+ "document_type": "Trade",
+ "doctype": "Dashboard Chart",
+ "filters_json": "[]",
+ "group_by_type": "Count",
+ "is_public": 1,
+ "module": "Trading Journal",
+ "name": "Win Loss Breakdown",
+ "timeseries": 0,
+ "type": "Donut"
+}

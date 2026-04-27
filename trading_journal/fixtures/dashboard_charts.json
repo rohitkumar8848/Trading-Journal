@@ -1,0 +1,49 @@
+[
+ {
+  "doctype": "Dashboard Chart",
+  "name": "P&L Over Time",
+  "chart_name": "P&L Over Time",
+  "document_type": "Trade",
+  "chart_type": "Sum",
+  "type": "Bar",
+  "based_on": "sell_date",
+  "value_based_on": "pnl",
+  "timeseries": 1,
+  "time_interval": "Daily",
+  "timespan": "Last Month",
+  "filters_json": "[]",
+  "is_public": 1,
+  "module": "Trading Journal",
+  "color": "#2196F3"
+ },
+ {
+  "doctype": "Dashboard Chart",
+  "name": "Win Loss Breakdown",
+  "chart_name": "Win / Loss Breakdown",
+  "document_type": "Trade",
+  "chart_type": "Group By",
+  "type": "Donut",
+  "group_by_based_on": "status",
+  "group_by_type": "Count",
+  "filters_json": "[]",
+  "timeseries": 0,
+  "is_public": 1,
+  "module": "Trading Journal",
+  "color": "#00BCD4"
+ },
+ {
+  "doctype": "Dashboard Chart",
+  "name": "Trades by Setup Type",
+  "chart_name": "Trades by Setup Type",
+  "document_type": "Trade",
+  "chart_type": "Group By",
+  "type": "Bar",
+  "group_by_based_on": "setup_type",
+  "group_by_type": "Count",
+  "filters_json": "[]",
+  "timeseries": 0,
+  "is_public": 1,
+  "module": "Trading Journal",
+  "color": "#FF9800"
+ }
+]

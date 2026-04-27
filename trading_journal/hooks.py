@@ -5,28 +5,47 @@ app_description = "A trading journal app"
 app_email = "dev@example.com"
 app_license = "mit"
 
+user_data_fields = []
+
+# Installation
+# ------------
+after_install = "trading_journal.trading_journal.install.after_install"
+
+# Bench commands
+# ---------------
+commands = ["trading_journal.trading_journal.commands.sync_scrips.commands"]
+
+fixtures = [
+	{"dt": "Dashboard Chart", "filters": [["module", "=", "Trading Journal"]]},
+	{"dt": "Number Card", "filters": [["module", "=", "Trading Journal"]]},
+	{"dt": "Dashboard", "filters": [["module", "=", "Trading Journal"]]},
+	{"dt": "Kanban Board", "filters": [["reference_doctype", "=", "Trade"]]},
+]
+
 # Apps
 # ------------------
 
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "trading_journal",
-# 		"logo": "/assets/trading_journal/logo.png",
-# 		"title": "Trading Journal",
-# 		"route": "/trading_journal",
-# 		"has_permission": "trading_journal.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "trading_journal",
+		"logo": "/assets/trading_journal/images/logo.svg",
+		"title": "Trading Journal",
+		"route": "/app/trading-journal",
+	}
+]
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/trading_journal/css/trading_journal.css"
-# app_include_js = "/assets/trading_journal/js/trading_journal.js"
+app_include_js = [
+	"/assets/trading_journal/js/tj_ai.js",
+	"/assets/trading_journal/js/tj_charts_v2.js",
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/trading_journal/css/trading_journal.css"
@@ -149,23 +168,25 @@ app_license = "mit"
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"trading_journal.tasks.all"
-# 	],
-# 	"daily": [
-# 		"trading_journal.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"trading_journal.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"trading_journal.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"trading_journal.tasks.monthly"
-# 	],
-# }
+scheduler_events = {
+	"cron": {
+		# 7:00 AM IST — pull NSE bhavcopy + recompute indicators for the previous
+		# trading day. Single bulk fetch, ~30 sec total.
+		"0 7 * * *": [
+			"trading_journal.trading_journal.utils.snapshot.scheduled_daily_snapshot",
+		],
+		# 8:00 AM IST — run all 3 screeners against the fresh snapshots (< 2 sec)
+		# and push the Telegram digest.
+		"0 8 * * *": [
+			"trading_journal.trading_journal.utils.screener.scheduled_daily_scan_all",
+		],
+		# Every 15 min: refresh watchlist prices and ping Telegram on triggers.
+		"*/15 * * * *": [
+			"trading_journal.trading_journal.utils.watchlist.check_watchlist_alerts",
+			"trading_journal.trading_journal.utils.watchlist.check_open_trade_alerts",
+		],
+	},
+}
 
 # Testing
 # -------
@@ -248,7 +269,7 @@ app_license = "mit"
 export_python_type_annotations = True
 
 # Require all whitelisted methods to have type annotations
-require_type_annotated_api_methods = True
+require_type_annotated_api_methods = False
 
 # default_log_clearing_doctypes = {
 # 	"Logging DocType Name": 30  # days to retain logs

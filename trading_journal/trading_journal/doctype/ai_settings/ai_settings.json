@@ -1,0 +1,109 @@
+{
+ "actions": [],
+ "creation": "2026-04-26 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "issingle": 1,
+ "field_order": [
+  "section_intro",
+  "intro_html",
+  "section_provider",
+  "enable_ai",
+  "provider",
+  "model",
+  "col_break_provider",
+  "gemini_api_key",
+  "section_news",
+  "news_cache_minutes",
+  "max_news_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_intro",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "intro_html",
+   "fieldtype": "HTML",
+   "options": "<div style=\"padding:14px 16px;background:#f0f9ff;border-left:3px solid #0ea5e9;border-radius:6px;font-size:13px\"><b>Free AI integration.</b><br/>Get a free Gemini API key at <a href=\"https://aistudio.google.com/app/apikey\" target=\"_blank\">aistudio.google.com/app/apikey</a> — no credit card required. Free tier allows 15 requests/min, 1500/day on <code>gemini-2.0-flash</code>.<br/><br/>News fetching uses Google News RSS — no key needed.</div>"
+  },
+  {
+   "fieldname": "section_provider",
+   "fieldtype": "Section Break",
+   "label": "AI Provider"
+  },
+  {
+   "fieldname": "enable_ai",
+   "fieldtype": "Check",
+   "label": "Enable AI Analysis",
+   "default": "1"
+  },
+  {
+   "fieldname": "provider",
+   "fieldtype": "Select",
+   "label": "Provider",
+   "options": "Gemini",
+   "default": "Gemini"
+  },
+  {
+   "fieldname": "model",
+   "fieldtype": "Data",
+   "label": "Model",
+   "default": "gemini-2.5-flash",
+   "description": "Click 'Tools → List Available Models' below to see what your key has access to right now (Google rolls models in/out frequently). Common ones in 2026: gemini-2.5-flash, gemini-2.5-pro, gemini-2.0-flash."
+  },
+  {
+   "fieldname": "col_break_provider",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gemini_api_key",
+   "fieldtype": "Password",
+   "label": "Gemini API Key",
+   "length": 400,
+   "description": "Get free at aistudio.google.com/app/apikey"
+  },
+  {
+   "fieldname": "section_news",
+   "fieldtype": "Section Break",
+   "label": "News"
+  },
+  {
+   "fieldname": "news_cache_minutes",
+   "fieldtype": "Int",
+   "label": "News Cache (minutes)",
+   "default": "30",
+   "description": "Repeated news fetches for the same symbol within this window are served from cache."
+  },
+  {
+   "fieldname": "max_news_items",
+   "fieldtype": "Int",
+   "label": "Max News Items",
+   "default": "8"
+  }
+ ],
+ "icon": "settings",
+ "links": [],
+ "modified": "2026-04-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "AI Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 0,
+   "export": 0,
+   "print": 0,
+   "read": 1,
+   "report": 0,
+   "role": "System Manager",
+   "share": 0,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

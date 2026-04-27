@@ -1,0 +1,18 @@
+{
+ "based_on": "trade_date",
+ "chart_name": "P&L Over Time",
+ "chart_type": "Sum",
+ "color": "#5E64FF",
+ "document_type": "Trade",
+ "doctype": "Dashboard Chart",
+ "filters_json": "[]",
+ "group_by_type": "Count",
+ "is_public": 1,
+ "module": "Trading Journal",
+ "name": "P&L Over Time",
+ "time_interval": "Daily",
+ "timeseries": 1,
+ "timespan": "Last Month",
+ "type": "Bar",
+ "value_based_on": "pnl"
+}

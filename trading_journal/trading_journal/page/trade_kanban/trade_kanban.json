@@ -1,0 +1,10 @@
+{
+ "content": "[]",
+ "doctype": "Page",
+ "module": "Trading Journal",
+ "name": "trade-kanban",
+ "page_name": "trade-kanban",
+ "roles": [{"role": "All"}],
+ "system_page": 0,
+ "title": "Trade Kanban"
+}

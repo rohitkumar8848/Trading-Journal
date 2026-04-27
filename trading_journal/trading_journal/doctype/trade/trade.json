@@ -1,0 +1,499 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "TJ-.YYYY.-.#####",
+ "creation": "2024-01-01 00:00:00",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "symbol",
+  "company_name",
+  "exchange",
+  "broker",
+  "trade_type",
+  "status",
+  "col_break1",
+  "nature",
+  "setup_type",
+  "timeframe",
+  "trade_date",
+  "buy_date",
+  "sell_date",
+  "final_status",
+  "section_txn",
+  "source",
+  "sold_qty",
+  "open_qty",
+  "transactions",
+  "section_entry",
+  "entry_price",
+  "stop_loss",
+  "target",
+  "col_break2",
+  "exit_price",
+  "quantity",
+  "current_price",
+  "price_fetched_at",
+  "section_pnl",
+  "pnl",
+  "pnl_percent",
+  "risk_reward",
+  "r_multiple",
+  "hold_days",
+  "col_break3",
+  "outcome",
+  "trade_grade",
+  "brokerage",
+  "taxes",
+  "total_charges",
+  "net_pnl",
+  "section_review",
+  "mistakes",
+  "section_notes",
+  "trade_notes",
+  "psychology_notes",
+  "section_charts",
+  "entry_screenshot",
+  "col_break_charts",
+  "exit_screenshot",
+  "section_chart_review",
+  "chart_reviewed",
+  "chart_reviewed_at",
+  "chart_review_notes"
+ ],
+ "fields": [
+  {
+   "bold": 1,
+   "fieldname": "symbol",
+   "fieldtype": "Link",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Symbol",
+   "options": "Stock Symbol",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "symbol.company_name",
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "symbol.exchange",
+   "fieldname": "exchange",
+   "fieldtype": "Data",
+   "label": "Exchange",
+   "read_only": 1
+  },
+  {
+   "description": "Broker account this trade was placed through.",
+   "fieldname": "broker",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Broker",
+   "options": "Broker",
+   "search_index": 1
+  },
+  {
+   "default": "Today",
+   "description": "Date of the first Buy transaction. Auto-set from the transactions table.",
+   "fieldname": "buy_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Buy Date"
+  },
+  {
+   "description": "Date of the last Sell transaction. Updates as the position is closed.",
+   "fieldname": "sell_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sell Date",
+   "read_only": 1
+  },
+  {
+   "description": "How you classify this trade \u2014 auto-suggested from hold duration if blank.",
+   "fieldname": "nature",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Nature",
+   "options": "\nIntraday\nSwing\nPositional\nOptions"
+  },
+  {
+   "description": "Mirror of buy_date, kept for backward compatibility with existing queries.",
+   "fieldname": "trade_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Trade Date (legacy)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "trade_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Trade Type",
+   "options": "Long\nShort",
+   "reqd": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Open\nPartially Sold\nWin\nLoss\nBreakeven",
+   "reqd": 1
+  },
+  {
+   "default": "Open",
+   "description": "Closed when all the quantity is sold out.",
+   "fieldname": "final_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Final Status",
+   "options": "Open\nClosed",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "setup_type",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Setup Type",
+   "options": "\nBreakout\nReversal\nTrend Follow\nScalp\nSwing\nOther"
+  },
+  {
+   "fieldname": "timeframe",
+   "fieldtype": "Select",
+   "label": "Timeframe",
+   "options": "\n1m\n3m\n5m\n15m\n30m\n1H\n4H\n1D\n1W\n1M"
+  },
+  {
+   "fieldname": "section_entry",
+   "fieldtype": "Section Break",
+   "label": "Entry & Levels"
+  },
+  {
+   "fieldname": "entry_price",
+   "fieldtype": "Currency",
+   "label": "Entry Price",
+   "precision": "4",
+   "reqd": 1
+  },
+  {
+   "fieldname": "stop_loss",
+   "fieldtype": "Currency",
+   "label": "Stop Loss (SL)",
+   "precision": "4"
+  },
+  {
+   "fieldname": "target",
+   "fieldtype": "Currency",
+   "label": "Target",
+   "precision": "4"
+  },
+  {
+   "fieldname": "col_break2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exit_price",
+   "fieldtype": "Currency",
+   "label": "Exit Price",
+   "precision": "4"
+  },
+  {
+   "default": "1",
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "reqd": 1
+  },
+  {
+   "description": "Latest market price from Yahoo Finance. Click 'Fetch Current Price' under Tools to refresh \u2014 helps see where the stock moved after exit.",
+   "fieldname": "current_price",
+   "fieldtype": "Currency",
+   "label": "Current Price",
+   "precision": "4"
+  },
+  {
+   "fieldname": "price_fetched_at",
+   "fieldtype": "Datetime",
+   "label": "Price Fetched At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_pnl",
+   "fieldtype": "Section Break",
+   "label": "P&L"
+  },
+  {
+   "bold": 1,
+   "fieldname": "pnl",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "P&L",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pnl_percent",
+   "fieldtype": "Percent",
+   "label": "P&L %",
+   "read_only": 1
+  },
+  {
+   "fieldname": "risk_reward",
+   "fieldtype": "Float",
+   "label": "Risk:Reward",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Realized P&L expressed in units of the initial risk.",
+   "fieldname": "r_multiple",
+   "fieldtype": "Float",
+   "label": "R-Multiple (Realized)",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "description": "Time held (earliest entry \u2192 latest exit), in days. 0.05 \u2248 1.2 hours.",
+   "fieldname": "hold_days",
+   "fieldtype": "Float",
+   "label": "Hold Days",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "outcome",
+   "fieldtype": "Select",
+   "label": "Outcome",
+   "options": "\nFull Target Hit\nPartial Target\nSL Hit\nManual Exit\nBreakeven"
+  },
+  {
+   "description": "How well you executed \u2014 independent of outcome.",
+   "fieldname": "trade_grade",
+   "fieldtype": "Select",
+   "label": "Execution Grade",
+   "options": "\nA\nB\nC\nD\nF"
+  },
+  {
+   "description": "Broker fees (sum of leg brokerage).",
+   "fieldname": "brokerage",
+   "fieldtype": "Currency",
+   "label": "Brokerage"
+  },
+  {
+   "description": "STT, stamp duty, SEBI fee, GST, IPFT, exchange charges combined.",
+   "fieldname": "taxes",
+   "fieldtype": "Currency",
+   "label": "Taxes & Fees"
+  },
+  {
+   "description": "Brokerage + Taxes.",
+   "fieldname": "total_charges",
+   "fieldtype": "Currency",
+   "label": "Total Charges",
+   "read_only": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "net_pnl",
+   "fieldtype": "Currency",
+   "label": "Net P&L (after charges)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_review",
+   "fieldtype": "Section Break",
+   "label": "Review & Mistakes"
+  },
+  {
+   "fieldname": "mistakes",
+   "fieldtype": "Table",
+   "label": "Mistakes",
+   "options": "Trade Mistake"
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes & Psychology"
+  },
+  {
+   "fieldname": "trade_notes",
+   "fieldtype": "Text Editor",
+   "label": "Trade Notes"
+  },
+  {
+   "fieldname": "psychology_notes",
+   "fieldtype": "Small Text",
+   "label": "Psychology / Emotions"
+  },
+  {
+   "fieldname": "section_charts",
+   "fieldtype": "Section Break",
+   "label": "Chart Screenshots",
+   "description": "Attach a chart snapshot just before entering and one after closing — used on the Trade Charts review page for side-by-side comparison."
+  },
+  {
+   "fieldname": "entry_screenshot",
+   "fieldtype": "Attach Image",
+   "label": "Before Buy (Entry Chart)"
+  },
+  {
+   "fieldname": "col_break_charts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "exit_screenshot",
+   "fieldtype": "Attach Image",
+   "label": "After Sell (Exit Chart)"
+  },
+  {
+   "fieldname": "section_chart_review",
+   "fieldtype": "Section Break",
+   "label": "Chart Review",
+   "collapsible": 1,
+   "description": "Mark a trade as reviewed after studying the before/after charts. Reviewed trades drop out of the Trade Charts page so you can work through your backlog."
+  },
+  {
+   "fieldname": "chart_reviewed",
+   "fieldtype": "Check",
+   "label": "Chart Reviewed",
+   "in_standard_filter": 1,
+   "default": "0"
+  },
+  {
+   "fieldname": "chart_reviewed_at",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1,
+   "depends_on": "eval:doc.chart_reviewed"
+  },
+  {
+   "fieldname": "chart_review_notes",
+   "fieldtype": "Small Text",
+   "label": "Chart Review Notes",
+   "description": "What did you learn from the before/after comparison?"
+  },
+  {
+   "fieldname": "screenshot",
+   "fieldtype": "Attach Image",
+   "label": "Chart Screenshot (legacy)",
+   "hidden": 1,
+   "description": "Old single screenshot field. Kept for back-compat — use Entry/Exit above."
+  },
+  {
+   "description": "Every buy/sell that built or closed this position. Parent fields (entry price, qty, status) are computed from these rows automatically.",
+   "fieldname": "section_txn",
+   "fieldtype": "Section Break",
+   "label": "Transactions"
+  },
+  {
+   "default": "Manual",
+   "fieldname": "source",
+   "fieldtype": "Select",
+   "label": "Source",
+   "options": "\nManual\nBroker Sync\nCSV Import",
+   "read_only": 1
+  },
+  {
+   "description": "Total quantity already closed (sold if Long, bought back if Short).",
+   "fieldname": "sold_qty",
+   "fieldtype": "Float",
+   "label": "Closed Qty",
+   "read_only": 1
+  },
+  {
+   "description": "Quantity still held.",
+   "fieldname": "open_qty",
+   "fieldtype": "Float",
+   "label": "Open Qty",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transactions",
+   "fieldtype": "Table",
+   "label": "Transactions",
+   "options": "Trade Transaction"
+  }
+ ],
+ "icon": "accounting",
+ "links": [],
+ "modified": "2026-04-25 00:23:17.381088",
+ "modified_by": "rktech097@gmail.com",
+ "module": "Trading Journal",
+ "name": "Trade",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "All",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "buy_date",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Open"
+  },
+  {
+   "color": "Purple",
+   "title": "Partially Sold"
+  },
+  {
+   "color": "Green",
+   "title": "Win"
+  },
+  {
+   "color": "Red",
+   "title": "Loss"
+  },
+  {
+   "color": "Yellow",
+   "title": "Breakeven"
+  }
+ ],
+ "title_field": "symbol",
+ "track_changes": 1
+}

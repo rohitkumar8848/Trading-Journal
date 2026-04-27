@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "field:broker_name",
+ "creation": "2026-04-21 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "broker_name",
+  "broker_type",
+  "account_holder",
+  "account_id",
+  "col_break_1",
+  "is_active",
+  "currency",
+  "section_capital",
+  "starting_capital",
+  "start_date",
+  "col_break_2",
+  "current_equity",
+  "realized_pnl",
+  "section_api",
+  "dhan_access_token",
+  "dhan_client_id",
+  "kite_api_key",
+  "kite_api_secret",
+  "kite_access_token",
+  "kite_token_expires_at",
+  "col_break_api",
+  "last_sync_at",
+  "last_sync_status",
+  "last_sync_error",
+  "section_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "broker_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "in_global_search": 1,
+   "label": "Broker Name",
+   "reqd": 1,
+   "unique": 1,
+   "bold": 1,
+   "description": "A label for this account (e.g. 'Zerodha Primary', 'Upstox Swing')."
+  },
+  {
+   "fieldname": "broker_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Broker Type",
+   "options": "\nDhan\nZerodha\nUpstox\nGroww\nICICI Direct\nAngel One\nFyers\nHDFC Securities\nKotak Securities\nSharekhan\n5paisa\nInteractive Brokers\nOther",
+   "reqd": 1
+  },
+  {
+   "fieldname": "account_holder",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Account Holder",
+   "description": "Whose name this account is in (e.g. Self, Dad, Mom, Wife). Useful for family accounts."
+  },
+  {
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "label": "Account / Client ID",
+   "description": "Your broker account ID (optional)."
+  },
+  {
+   "fieldname": "col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Active",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Currency",
+   "options": "Currency",
+   "default": "INR"
+  },
+  {
+   "fieldname": "section_capital",
+   "fieldtype": "Section Break",
+   "label": "Capital & Start"
+  },
+  {
+   "fieldname": "starting_capital",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Starting Capital",
+   "reqd": 1,
+   "description": "Amount funded into this broker account."
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1,
+   "description": "When you started trading with this broker."
+  },
+  {
+   "fieldname": "col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_equity",
+   "fieldtype": "Currency",
+   "label": "Current Equity (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "realized_pnl",
+   "fieldtype": "Currency",
+   "label": "Realized P&L (auto)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_api",
+   "fieldtype": "Section Break",
+   "label": "API Integration",
+   "collapsible": 1,
+   "description": "Credentials used to sync holdings & positions. Only Dhan is supported right now."
+  },
+  {
+   "fieldname": "dhan_access_token",
+   "fieldtype": "Password",
+   "label": "Dhan Access Token (PAT)",
+   "depends_on": "eval:doc.broker_type === 'Dhan'",
+   "length": 1000,
+   "description": "Personal Access Token (JWT) from web.dhan.co → Profile → DhanHQ Trading API. Valid ~30 days. Client ID is auto-extracted from the token."
+  },
+  {
+   "fieldname": "dhan_client_id",
+   "fieldtype": "Data",
+   "label": "Dhan Client ID (auto)",
+   "depends_on": "eval:doc.broker_type === 'Dhan'",
+   "read_only": 1,
+   "description": "Auto-extracted from the PAT on save."
+  },
+  {
+   "fieldname": "kite_api_key",
+   "fieldtype": "Data",
+   "label": "Kite API Key",
+   "depends_on": "eval:doc.broker_type === 'Zerodha'",
+   "description": "From developers.kite.trade — App → API key."
+  },
+  {
+   "fieldname": "kite_api_secret",
+   "fieldtype": "Password",
+   "label": "Kite API Secret",
+   "depends_on": "eval:doc.broker_type === 'Zerodha'",
+   "description": "From developers.kite.trade — App → API secret. Used once per day to exchange request_token for access_token."
+  },
+  {
+   "fieldname": "kite_access_token",
+   "fieldtype": "Password",
+   "label": "Kite Access Token (auto)",
+   "depends_on": "eval:doc.broker_type === 'Zerodha'",
+   "length": 1000,
+   "read_only": 1,
+   "description": "Generated daily via the Login button. Expires at 6 AM IST every day."
+  },
+  {
+   "fieldname": "kite_token_expires_at",
+   "fieldtype": "Datetime",
+   "label": "Token Expires At",
+   "depends_on": "eval:doc.broker_type === 'Zerodha'",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_break_api",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_sync_at",
+   "fieldtype": "Datetime",
+   "label": "Last Sync At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_sync_status",
+   "fieldtype": "Data",
+   "label": "Last Sync Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_sync_error",
+   "fieldtype": "Small Text",
+   "label": "Last Sync Error",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "icon": "fa fa-university",
+ "idx": 0,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-04-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Broker",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1, "delete": 1, "email": 1, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1
+  },
+  {
+   "create": 1, "delete": 1, "email": 1, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "All", "share": 1, "write": 1
+  }
+ ],
+ "sort_field": "broker_name",
+ "sort_order": "ASC",
+ "title_field": "broker_name",
+ "track_changes": 1
+}

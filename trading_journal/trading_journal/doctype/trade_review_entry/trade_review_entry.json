@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "autoname": "format:{period_type}-{period_start}",
+ "creation": "2026-04-22 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "period_type",
+  "period_start",
+  "period_end",
+  "section_reflection",
+  "went_right",
+  "went_wrong",
+  "improvement"
+ ],
+ "fields": [
+  {
+   "fieldname": "period_type",
+   "fieldtype": "Select",
+   "label": "Period",
+   "options": "Week\nMonth",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "period_start",
+   "fieldtype": "Date",
+   "label": "Period Start",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "period_end",
+   "fieldtype": "Date",
+   "label": "Period End",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_reflection",
+   "fieldtype": "Section Break",
+   "label": "Reflection"
+  },
+  {
+   "fieldname": "went_right",
+   "fieldtype": "Long Text",
+   "label": "What went right?"
+  },
+  {
+   "fieldname": "went_wrong",
+   "fieldtype": "Long Text",
+   "label": "What went wrong?"
+  },
+  {
+   "fieldname": "improvement",
+   "fieldtype": "Long Text",
+   "label": "One thing to improve next period"
+  }
+ ],
+ "icon": "fa fa-file-text-o",
+ "idx": 0,
+ "is_submittable": 0,
+ "links": [],
+ "modified": "2026-04-22 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Trade Review Entry",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1, "delete": 1, "email": 0, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "System Manager", "share": 0, "write": 1
+  },
+  {
+   "create": 1, "delete": 1, "email": 0, "export": 1, "print": 1,
+   "read": 1, "report": 1, "role": "All", "share": 0, "write": 1
+  }
+ ],
+ "sort_field": "period_start",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,0 +1,53 @@
+{
+ "actions": [],
+ "creation": "2024-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Child Table",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "category",
+  "note",
+  "priority",
+  "addressed"
+ ],
+ "fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "Entry Timing\nExit Timing\nRisk Management\nPosition Sizing\nPsychology\nSetup Quality\nOther"
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Point to Improve",
+   "reqd": 1
+  },
+  {
+   "fieldname": "priority",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Priority",
+   "options": "High\nMedium\nLow",
+   "default": "Medium"
+  },
+  {
+   "fieldname": "addressed",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Addressed"
+  }
+ ],
+ "idx": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Trading Journal",
+ "name": "Trade Improvement Note",
+ "owner": "Administrator",
+ "permissions": []
+}
