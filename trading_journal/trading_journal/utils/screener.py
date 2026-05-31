@@ -70,6 +70,45 @@ def _bundled_nifty500() -> list:
 		return []
 
 
+def _bundled_fno_symbols() -> set:
+	"""Set of NSE F&O-eligible symbols, bundled with the app.
+
+	The NSE F&O list changes ~quarterly. The CSV is a maintained snapshot —
+	when NSE adds/removes a stock, update `data/fno_list.csv`. We don't fetch
+	live since the canonical NSE URL requires session cookies.
+	"""
+	import os
+	path = os.path.join(
+		os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+		"data", "fno_list.csv",
+	)
+	out = set()
+	try:
+		with open(path, "r", encoding="utf-8") as f:
+			for row in csv.DictReader(f):
+				sym = (row.get("Symbol") or "").strip().upper()
+				if sym:
+					out.add(sym)
+	except FileNotFoundError:
+		pass
+	return out
+
+
+def get_fno_symbols() -> set:
+	"""Cached set of F&O-eligible NSE symbols."""
+	cache = frappe.cache()
+	key = "tj:screener:fno_list"
+	cached = cache.get_value(key)
+	if cached:
+		try:
+			return set(json.loads(cached))
+		except Exception:
+			pass
+	syms = _bundled_fno_symbols()
+	cache.set_value(key, json.dumps(sorted(syms)), expires_in_sec=24 * 3600)
+	return syms
+
+
 def get_nifty500_symbols(force: int = 0) -> list:
 	"""Fetch the current Nifty 500 constituent list. Cached 24h.
 
@@ -414,76 +453,6 @@ def detect_vcp(candles: list, ind: dict) -> dict:
 	}
 
 
-# ─────────────────────── Tight 1-month consolidation ───────────────────────
-
-def detect_tight_consolidation(candles: list, ind: dict, window_days: int = 22) -> dict:
-	"""Find symbols trading in a narrow range for the past month.
-
-	Definition (defaults — tunable):
-	  - Last `window_days` (~22 trading days = 1 month) range
-	  - (high - low) / mid < 8%   (tight)
-	  - Recent 10-bar avg volume < prior 30-bar avg (volume dry-up)
-	  - Price > 50-SMA AND 50-SMA > 200-SMA (clean uptrend, not a downtrend pause)
-	"""
-	if len(candles) < max(window_days + 5, 60):
-		return {"is_tight": False, "reason": "not enough history"}
-
-	w = candles[-window_days:]
-	highs = [c["h"] for c in w]
-	lows = [c["l"] for c in w]
-	closes = [c["c"] for c in w]
-	hi = max(highs)
-	lo = min(lows)
-	mid = (hi + lo) / 2 if (hi + lo) > 0 else 0
-	if mid <= 0:
-		return {"is_tight": False, "reason": "bad price data"}
-	range_pct = (hi - lo) / mid * 100
-
-	# How far the latest close is from the top of the range (< 5% = breakout-ready)
-	last = closes[-1]
-	dist_from_high_pct = (hi - last) / hi * 100 if hi else 0
-
-	# Volume dry-up: last 10 bars vs prior 20 bars within the window
-	vols = [c["v"] for c in candles[-(window_days + 20):]]
-	avg_recent = sum(vols[-10:]) / 10 if len(vols) >= 10 else 0
-	avg_earlier = sum(vols[:-10]) / max(len(vols) - 10, 1) if len(vols) > 10 else 0
-	vol_dry = avg_recent < avg_earlier if avg_earlier else False
-	vol_ratio = (avg_recent / avg_earlier) if avg_earlier else 0
-
-	# Trend filter — a "tight base" inside a downtrend is just a pause; we want uptrends
-	price = ind.get("price") or last
-	sma50 = ind.get("sma50")
-	sma200 = ind.get("sma200")
-	above_50 = bool(price and sma50 and price > sma50)
-	stack_50_200 = bool(sma50 and sma200 and sma50 > sma200)
-
-	tight_range = range_pct <= 8
-	near_top = dist_from_high_pct <= 5
-	is_tight = tight_range and near_top and above_50 and stack_50_200
-
-	return {
-		"is_tight": bool(is_tight),
-		"window_days": window_days,
-		"range_pct": round(range_pct, 2),
-		"range_high": round(hi, 2),
-		"range_low": round(lo, 2),
-		"distance_from_range_high_pct": round(dist_from_high_pct, 2),
-		"volume_dry_up": vol_dry,
-		"volume_ratio": round(vol_ratio, 2),
-		"price_above_50sma": above_50,
-		"sma50_above_sma200": stack_50_200,
-		"reason": (
-			"tight 1-month base near range high in uptrend" if is_tight
-			else (
-				"range too wide" if not tight_range
-				else "below 50 SMA" if not above_50
-				else "50 SMA below 200 SMA (downtrend)" if not stack_50_200
-				else "not near range high"
-			)
-		),
-	}
-
-
 # ─────────────────────── progress reporting ───────────────────────
 
 def _set_progress(run_name: str, message: str):
@@ -530,70 +499,378 @@ def _evaluate_trend_template_from_snapshot(row: dict) -> dict:
 	return {"criteria": criteria, "passed": passed, "all_pass": passed == 8}
 
 
-def _detect_near_52w_high_from_snapshot(row: dict, max_distance_pct: float = 20.0) -> dict:
-	"""Symbols within `max_distance_pct` of their 52-week high, in an uptrend.
+def _detect_rocket_base(candles: list, last_close: float, min_run_pct: float = 90.0,
+                         max_base_pullback_pct: float = 25.0) -> dict:
+	"""Mark Minervini's Power Play / High Tight Flag (a.k.a. "Rocket Base").
 
-	Excludes falling knives by requiring price > 50-SMA AND 50 > 200-SMA.
+	Looks for stocks that:
+	  1. Rocketed up: 8-week return ≥ min_run_pct (default 90%)
+	  2. Then based tightly: most recent ~4-week pullback from peak ≤ max_base_pullback_pct (default 25%)
+	  3. Still holding near the peak (close within max_base_pullback_pct of the 8w high)
+	  4. Optional: volume drying up in the base vs the rally
 	"""
-	price = flt(row.get("close_price"))
-	hi52 = flt(row.get("high_52w"))
-	pct_from_high = flt(row.get("pct_from_52w_high"))  # negative or 0
-	sma50 = row.get("sma50")
-	sma200 = row.get("sma200")
-	above_50 = bool(price and sma50 and price > sma50)
-	stack = bool(sma50 and sma200 and sma50 > sma200)
-	in_range = pct_from_high >= -float(max_distance_pct)
-	is_near = in_range and above_50 and stack
+	if len(candles) < 50:
+		return {"is_rocket_base": False, "reason": "not enough history"}
 
-	# Days since the 52w high — bonus filter only used for sort tie-break, not enforced
+	closes = [c["c"] for c in candles]
+	highs = [c["h"] for c in candles]
+	lows = [c["l"] for c in candles]
+	vols = [c["v"] for c in candles]
+
+	# 8-week window = ~40 trading days
+	window_8w = 40
+	if len(closes) <= window_8w:
+		return {"is_rocket_base": False, "reason": "history < 8 weeks"}
+	bar_8w_ago = closes[-window_8w - 1]
+	if not bar_8w_ago:
+		return {"is_rocket_base": False, "reason": "bad reference price"}
+	peak_8w = max(highs[-window_8w:])
+	run_pct = (peak_8w / bar_8w_ago - 1) * 100
+
+	# Recent base: last ~4 weeks (20 bars)
+	base_window = 20
+	base_highs = highs[-base_window:]
+	base_lows = lows[-base_window:]
+	base_peak = max(base_highs)
+	base_low = min(base_lows)
+	base_depth_pct = (base_peak - base_low) / base_peak * 100 if base_peak else 0
+
+	# How far the latest close is below the 8-week peak
+	dist_from_peak_pct = (peak_8w - last_close) / peak_8w * 100 if peak_8w else 0
+
+	# Volume dry-up: last 10 bars vs prior 30
+	avg_recent = sum(vols[-10:]) / 10 if len(vols) >= 10 else 0
+	earlier = vols[-40:-10] if len(vols) >= 40 else []
+	avg_earlier = sum(earlier) / len(earlier) if earlier else 0
+	vol_dry = avg_recent < avg_earlier if avg_earlier else False
+
+	is_rocket = (
+		run_pct >= float(min_run_pct)
+		and base_depth_pct <= float(max_base_pullback_pct)
+		and dist_from_peak_pct <= float(max_base_pullback_pct)
+	)
+
 	return {
-		"is_near_high": bool(is_near),
-		"high_52w": round(hi52, 2),
-		"distance_from_high_pct": round(abs(pct_from_high), 2),
-		"max_distance_pct": float(max_distance_pct),
-		"price_above_50sma": above_50,
-		"sma50_above_sma200": stack,
+		"is_rocket_base": bool(is_rocket),
+		"run_pct_8w": round(run_pct, 2),
+		"peak_8w": round(peak_8w, 2),
+		"base_depth_pct": round(base_depth_pct, 2),
+		"dist_from_peak_pct": round(dist_from_peak_pct, 2),
+		"volume_dry_up": vol_dry,
 		"reason": (
-			"within range of 52w high in uptrend" if is_near
+			"rocketed and based tightly near peak" if is_rocket
 			else (
-				f"too far from 52w high (>{max_distance_pct}%)" if not in_range
-				else "below 50 SMA" if not above_50
-				else "50 SMA below 200 SMA (downtrend)"
+				f"8w rally only {round(run_pct, 1)}% (need ≥ {min_run_pct}%)" if run_pct < min_run_pct
+				else f"base too deep ({round(base_depth_pct, 1)}% > {max_base_pullback_pct}%)" if base_depth_pct > max_base_pullback_pct
+				else f"price too far from peak ({round(dist_from_peak_pct, 1)}%)"
 			)
 		),
 	}
 
 
-def _detect_tight_from_snapshot(row: dict) -> dict:
-	"""Tight 1-month consolidation directly from snapshot columns."""
+def _detect_turnaround_from_snapshot(row: dict) -> dict:
+	"""Turnaround stock detector — a beaten-down laggard reversing into a new uptrend.
+
+	This is the *technical signature* of a fundamental turnaround (Weinstein
+	Stage 1 → Stage 2 transition). We don't have earnings data, so instead of
+	confirming the fundamentals we confirm that the market has *already
+	repriced* the recovery — price action leads the tape.
+
+	A turnaround candidate is a stock that:
+	  1. Was beaten down  — trades ≥ 25% below its 52-week high (room to recover;
+	     a stock near its high is a momentum leader, not a turnaround).
+	  2. Has bottomed     — sits ≥ 20% above its 52-week low (a base formed and
+	     price has lifted off it, i.e. it is no longer falling).
+	  3. Reclaimed the trend — price back above BOTH the 50-DMA and 200-DMA
+	     (the single clearest "Stage 2 has begun" signal).
+	  4. Downtrend is ending — the 200-DMA has stopped falling vs ~2 months ago
+	     (separates a real turn from a dead-cat bounce inside a downtrend).
+	  5. Was a laggard    — 12-month return < 25% (it genuinely under-performed;
+	     this is what makes it a turnaround and not an extended winner).
+	  6. Momentum inflection — 3-month return ≥ 10% (a sharp recent-quarter
+	     surge — the actual "turn").
+	  7. Relative strength recovering — RS Rating ≥ 45 (lifting off the lows).
+	"""
 	price = flt(row.get("close_price"))
-	sma50 = row.get("sma50")
-	sma200 = row.get("sma200")
-	r_pct = flt(row.get("range_22d_pct"))
-	r_hi = flt(row.get("range_22d_high"))
-	dist_from_high = (r_hi - price) / r_hi * 100 if r_hi else 0
+	sma50 = flt(row.get("sma50"))
+	sma200 = flt(row.get("sma200"))
+	sma200_44 = flt(row.get("sma200_44d_ago"))
+	pct_from_high = flt(row.get("pct_from_52w_high"))   # ≤ 0
+	pct_above_low = flt(row.get("pct_above_52w_low"))   # ≥ 0
+	ret_3m = flt(row.get("ret_3m"))    # snapshot stores returns as percentages (12.0 = 12%)
+	ret_6m = flt(row.get("ret_6m"))
+	ret_12m = flt(row.get("ret_12m"))
+	rs = flt(row.get("rs_rating"))
 	vol_ratio = flt(row.get("vol_ratio_10_20"))
+
+	checks = {
+		"beaten_down":      pct_from_high <= -25,
+		"lifted_off_low":   pct_above_low >= 20,
+		"reclaimed_trend":  bool(price and sma200 and sma50 and price > sma200 and price > sma50),
+		"downtrend_ending": bool(sma200 and sma200_44 and sma200 >= sma200_44),
+		"was_laggard":      ret_12m < 25,
+		"momentum_turn":    ret_3m >= 10,
+		"rs_recovering":    rs >= 45,
+	}
+	is_turnaround = all(checks.values())
+	golden_cross = bool(sma50 and sma200 and sma50 > sma200)
+	volume_expansion = vol_ratio >= 1.1
+
+	return {
+		"is_turnaround": bool(is_turnaround),
+		"ret_3m_pct": round(ret_3m, 2),
+		"ret_6m_pct": round(ret_6m, 2),
+		"ret_12m_pct": round(ret_12m, 2),
+		"dist_from_52w_high_pct": round(pct_from_high, 2),
+		"above_52w_low_pct": round(pct_above_low, 2),
+		"price_above_200sma": checks["reclaimed_trend"],
+		"sma200_flat_or_rising": checks["downtrend_ending"],
+		"golden_cross": golden_cross,
+		"volume_expansion": volume_expansion,
+		"vol_ratio_10_20": round(vol_ratio, 2),
+		"rs_rating": round(rs, 1),
+		"checks": checks,
+		"reason": (
+			"beaten-down laggard reclaiming its trend — turnaround underway" if is_turnaround
+			else (
+				f"only {round(abs(pct_from_high), 1)}% below 52w high — not beaten down" if not checks["beaten_down"]
+				else f"only {round(pct_above_low, 1)}% above 52w low — base not formed" if not checks["lifted_off_low"]
+				else "still below 50-DMA / 200-DMA — downtrend intact" if not checks["reclaimed_trend"]
+				else "200-DMA still falling — no base yet" if not checks["downtrend_ending"]
+				else f"12m return {round(ret_12m, 1)}% — already a leader, not a turnaround" if not checks["was_laggard"]
+				else f"3m return {round(ret_3m, 1)}% < 10% — no momentum inflection" if not checks["momentum_turn"]
+				else f"RS Rating {round(rs, 1)} < 45 — relative strength not recovering"
+			)
+		),
+	}
+
+
+def _detect_intraday_momentum(candles: list, row: dict,
+                                min_change_pct: float = 2.0,
+                                min_close_strength: float = 0.65,
+                                min_range_pct: float = 1.5,
+                                min_vol_ratio: float = 1.5) -> dict:
+	"""Identify next-day intraday trade candidates from end-of-day signals.
+
+	The screener runs on daily bars, so it can't see live ticks. Instead it
+	flags stocks that *closed strong* with surging volume — these are the
+	tape's "in-play" names that gap-up traders and ORB scalpers watch the
+	next morning.
+
+	Criteria (all configurable):
+	  1. Today's % change ≥ min_change_pct  (true up-day, not noise)
+	  2. Close in top (1 - min_close_strength) of the day's range — i.e.
+	     `(close - low) / (high - low) ≥ min_close_strength`  (closing strength)
+	  3. Day's range ≥ min_range_pct of close  (enough movement to trade)
+	  4. Today's volume ≥ min_vol_ratio × avg 20-day volume  (volume surge)
+	  5. Price > 20-period SMA (uptrend bias; uses sma50 from snapshot)
+	  6. RS Rating ≥ 50  (not a contra-trend bounce in a weak name)
+	"""
+	if len(candles) < 22:
+		return {"is_momentum": False, "reason": "not enough history"}
+	today = candles[-1]
+	prev = candles[-2]
+	# Returns / gap
+	prev_close = flt(prev["c"])
+	if prev_close <= 0:
+		return {"is_momentum": False, "reason": "bad prev close"}
+	change_pct = (today["c"] - prev_close) / prev_close * 100
+	gap_pct = (today["o"] - prev_close) / prev_close * 100
+	# Range + closing strength
+	day_range = today["h"] - today["l"]
+	if day_range <= 0 or today["c"] <= 0:
+		return {"is_momentum": False, "reason": "no intraday range"}
+	close_strength = (today["c"] - today["l"]) / day_range  # 1.0 = closed at high
+	range_pct = day_range / today["c"] * 100
+	# Volume surge (today vs last 20 days)
+	prior_vols = [c["v"] for c in candles[-21:-1] if c.get("v")]
+	avg_vol = sum(prior_vols) / len(prior_vols) if prior_vols else 0
+	vol_ratio = (today["v"] / avg_vol) if avg_vol else 0
+	# Trend bias from snapshot row (sma50 + RS)
+	price = flt(row.get("close_price")) or today["c"]
+	sma50 = flt(row.get("sma50"))
+	sma200 = flt(row.get("sma200"))
 	above_50 = bool(price and sma50 and price > sma50)
 	stack = bool(sma50 and sma200 and sma50 > sma200)
-	is_tight = (r_pct and r_pct <= 8) and (dist_from_high <= 5) and above_50 and stack
+	rs = flt(row.get("rs_rating"))
+	# Distance from 20-day high (need fresh from candles)
+	recent_high = max(c["h"] for c in candles[-20:])
+	dist_from_20d_high = (recent_high - today["c"]) / recent_high * 100 if recent_high else 0
+
+	checks = {
+		"change_pct_ok":    change_pct >= float(min_change_pct),
+		"close_strong":     close_strength >= float(min_close_strength),
+		"range_ok":         range_pct >= float(min_range_pct),
+		"volume_surge":     vol_ratio >= float(min_vol_ratio),
+		"above_50sma":      above_50,
+		"rs_60_plus":       rs >= 50,
+	}
+	is_momentum = all(checks.values())
+
 	return {
-		"is_tight": bool(is_tight),
-		"window_days": 22,
-		"range_pct": round(r_pct, 2),
-		"range_high": round(r_hi, 2),
-		"range_low": round(flt(row.get("range_22d_low")), 2),
-		"distance_from_range_high_pct": round(dist_from_high, 2),
-		"volume_ratio": round(vol_ratio, 2),
-		"volume_dry_up": vol_ratio < 1 if vol_ratio else False,
-		"price_above_50sma": above_50,
+		"is_momentum": bool(is_momentum),
+		"change_pct": round(change_pct, 2),
+		"gap_pct": round(gap_pct, 2),
+		"close_strength": round(close_strength * 100, 1),  # as %
+		"range_pct": round(range_pct, 2),
+		"vol_ratio_20d": round(vol_ratio, 2),
+		"avg_vol_20d": int(avg_vol or 0),
+		"today_volume": int(today["v"] or 0),
+		"dist_from_20d_high_pct": round(dist_from_20d_high, 2),
 		"sma50_above_sma200": stack,
+		"price_above_50sma": above_50,
+		"checks": checks,
 		"reason": (
-			"tight 1-month base near range high in uptrend" if is_tight
+			"strong close on volume — intraday momentum candidate" if is_momentum
 			else (
-				"range too wide" if (not r_pct or r_pct > 8)
-				else "below 50 SMA" if not above_50
-				else "50 SMA below 200 SMA (downtrend)" if not stack
-				else "not near range high"
+				f"change only {round(change_pct, 1)}% (need ≥ {min_change_pct}%)" if not checks["change_pct_ok"]
+				else f"close strength {round(close_strength * 100, 0)}% (need ≥ {min_close_strength * 100:.0f}%)" if not checks["close_strong"]
+				else f"range only {round(range_pct, 2)}% (need ≥ {min_range_pct}%)" if not checks["range_ok"]
+				else f"volume {round(vol_ratio, 1)}× avg (need ≥ {min_vol_ratio}×)" if not checks["volume_surge"]
+				else "below 50 SMA" if not checks["above_50sma"]
+				else "RS Rating < 50"
+			)
+		),
+	}
+
+
+def _detect_intraday_short(candles: list, row: dict,
+                            min_change_pct: float = 2.0,
+                            max_close_strength: float = 0.35,
+                            min_range_pct: float = 1.5,
+                            min_vol_ratio: float = 1.5) -> dict:
+	"""Identify next-day intraday short candidates from end-of-day signals.
+
+	Sell-side mirror of `_detect_intraday_momentum`. Flags stocks that
+	*closed weak* on heavy volume — the tape's "in-play" sellers that
+	gap-down and ORB-short traders watch the next morning.
+
+	Criteria (all configurable):
+	  1. Today's % change ≤ -min_change_pct  (true down-day, not noise)
+	  2. Close in bottom (max_close_strength) of the day's range — i.e.
+	     `(close - low) / (high - low) ≤ max_close_strength`  (closed near low)
+	  3. Day's range ≥ min_range_pct of close  (enough movement to trade)
+	  4. Today's volume ≥ min_vol_ratio × avg 20-day volume  (distribution surge)
+	  5. Price < 50 SMA  (downtrend bias)
+	  6. RS Rating ≤ 50  (laggard vs Nifty 500)
+	"""
+	if len(candles) < 22:
+		return {"is_short": False, "reason": "not enough history"}
+	today = candles[-1]
+	prev = candles[-2]
+	prev_close = flt(prev["c"])
+	if prev_close <= 0:
+		return {"is_short": False, "reason": "bad prev close"}
+	change_pct = (today["c"] - prev_close) / prev_close * 100
+	gap_pct = (today["o"] - prev_close) / prev_close * 100
+	day_range = today["h"] - today["l"]
+	if day_range <= 0 or today["c"] <= 0:
+		return {"is_short": False, "reason": "no intraday range"}
+	# Same metric as buy-side (1.0 = closed at high, 0.0 = closed at low) so
+	# the UI/sorting reads consistently — short setups want this LOW.
+	close_strength = (today["c"] - today["l"]) / day_range
+	range_pct = day_range / today["c"] * 100
+	prior_vols = [c["v"] for c in candles[-21:-1] if c.get("v")]
+	avg_vol = sum(prior_vols) / len(prior_vols) if prior_vols else 0
+	vol_ratio = (today["v"] / avg_vol) if avg_vol else 0
+	price = flt(row.get("close_price")) or today["c"]
+	sma50 = flt(row.get("sma50"))
+	sma200 = flt(row.get("sma200"))
+	below_50 = bool(price and sma50 and price < sma50)
+	# Bearish stack: 50 SMA below 200 SMA
+	bearish_stack = bool(sma50 and sma200 and sma50 < sma200)
+	rs = flt(row.get("rs_rating"))
+	recent_low = min(c["l"] for c in candles[-20:])
+	dist_from_20d_low = (today["c"] - recent_low) / recent_low * 100 if recent_low else 0
+
+	checks = {
+		"change_pct_ok":    change_pct <= -float(min_change_pct),
+		"close_weak":       close_strength <= float(max_close_strength),
+		"range_ok":         range_pct >= float(min_range_pct),
+		"volume_surge":     vol_ratio >= float(min_vol_ratio),
+		"below_50sma":      below_50,
+		"rs_50_or_less":    rs <= 50 and rs > 0,
+	}
+	is_short = all(checks.values())
+
+	return {
+		"is_short": bool(is_short),
+		"change_pct": round(change_pct, 2),
+		"gap_pct": round(gap_pct, 2),
+		"close_strength": round(close_strength * 100, 1),
+		"range_pct": round(range_pct, 2),
+		"vol_ratio_20d": round(vol_ratio, 2),
+		"avg_vol_20d": int(avg_vol or 0),
+		"today_volume": int(today["v"] or 0),
+		"dist_from_20d_low_pct": round(dist_from_20d_low, 2),
+		"sma50_below_sma200": bearish_stack,
+		"price_below_50sma": below_50,
+		"checks": checks,
+		"reason": (
+			"weak close on volume — intraday short candidate" if is_short
+			else (
+				f"change only {round(change_pct, 1)}% (need ≤ -{min_change_pct}%)" if not checks["change_pct_ok"]
+				else f"close strength {round(close_strength * 100, 0)}% (need ≤ {max_close_strength * 100:.0f}%)" if not checks["close_weak"]
+				else f"range only {round(range_pct, 2)}% (need ≥ {min_range_pct}%)" if not checks["range_ok"]
+				else f"volume {round(vol_ratio, 1)}× avg (need ≥ {min_vol_ratio}×)" if not checks["volume_surge"]
+				else "above 50 SMA" if not checks["below_50sma"]
+				else "RS Rating > 50"
+			)
+		),
+	}
+
+
+def _detect_fno_momentum_from_snapshot(row: dict, in_fno: bool) -> dict:
+	"""F&O swing-momentum candidates — Trend Template-lite for the F&O universe.
+
+	F&O traders need liquidity (everyone in the F&O universe has it) and a
+	clean, sustained trend so options premium decay doesn't fight them.
+
+	Criteria:
+	  1. Symbol is F&O-eligible
+	  2. Price > 50 SMA AND 50 SMA > 200 SMA  (clean uptrend)
+	  3. RS Rating ≥ 60  (top-third strength vs Nifty 500)
+	  4. 3-month return ≥ 5%  (sustained, not 1-day pop)
+	  5. Within 20% of 52-week high  (not a falling knife)
+	  6. Volume ratio (10d/20d) ≥ 1.0  (recent volume holding up)
+	"""
+	if not in_fno:
+		return {"is_fno_momentum": False, "reason": "not F&O-eligible"}
+	price = flt(row.get("close_price"))
+	sma50 = flt(row.get("sma50"))
+	sma200 = flt(row.get("sma200"))
+	rs = flt(row.get("rs_rating"))
+	ret_3m = flt(row.get("ret_3m"))  # snapshot already stores as a percentage (12.0 = 12%)
+	pct_from_high = flt(row.get("pct_from_52w_high"))
+	vol_ratio = flt(row.get("vol_ratio_10_20"))
+
+	checks = {
+		"above_50sma":      bool(price and sma50 and price > sma50),
+		"sma50_above_200":  bool(sma50 and sma200 and sma50 > sma200),
+		"rs_60_plus":       rs >= 60,
+		"ret_3m_5pct":      ret_3m >= 5,
+		"within_20_pct_of_high": pct_from_high >= -20,
+		"vol_holding":      vol_ratio >= 1.0,
+	}
+	is_fno = all(checks.values())
+	return {
+		"is_fno_momentum": bool(is_fno),
+		"ret_3m_pct": round(ret_3m, 2),
+		"dist_from_52w_high_pct": round(abs(pct_from_high), 2),
+		"vol_ratio_10_20": round(vol_ratio, 2),
+		"price_above_50sma": checks["above_50sma"],
+		"sma50_above_sma200": checks["sma50_above_200"],
+		"rs_rating": round(rs, 1),
+		"checks": checks,
+		"reason": (
+			"F&O stock in clean uptrend with momentum" if is_fno
+			else (
+				"below 50 SMA" if not checks["above_50sma"]
+				else "50 SMA below 200 SMA (downtrend)" if not checks["sma50_above_200"]
+				else f"RS Rating {round(rs, 1)} < 60" if not checks["rs_60_plus"]
+				else f"3-month return {round(ret_3m, 1)}% < 5%" if not checks["ret_3m_5pct"]
+				else "more than 20% below 52w high" if not checks["within_20_pct_of_high"]
+				else f"volume cooling (ratio {round(vol_ratio, 2)})"
 			)
 		),
 	}
@@ -680,10 +957,10 @@ def run_scan_from_snapshot(scan_type: str) -> dict:
 				})
 		results.sort(key=lambda x: (-x["passed_count"], -x["rs_rating"]))
 
-	elif scan_type == "Tight Consolidation":
+	elif scan_type == "Turnaround":
 		for r in rows:
-			t = _detect_tight_from_snapshot(r)
-			if t.get("is_tight"):
+			ta = _detect_turnaround_from_snapshot(r)
+			if ta.get("is_turnaround"):
 				ev = _evaluate_trend_template_from_snapshot(r)
 				results.append({
 					"symbol": r["symbol"],
@@ -693,35 +970,53 @@ def run_scan_from_snapshot(scan_type: str) -> dict:
 					"rs_rating": flt(r.get("rs_rating")),
 					"pct_from_52w_high": flt(r.get("pct_from_52w_high")),
 					"pct_above_52w_low": flt(r.get("pct_above_52w_low")),
-					"vcp_tightness": flt(t.get("range_pct")),
+					# Repurpose vcp_tightness as the 3-month return (used for sort + UI)
+					"vcp_tightness": flt(ta.get("ret_3m_pct")),
 					"criteria_json": json.dumps(
-						{"tight_consolidation": t, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
+						{"turnaround": ta, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
 						default=str,
 					),
 				})
-		results.sort(key=lambda x: (x["vcp_tightness"], -x["rs_rating"]))
+		# Strongest recent-quarter recovery first, then RS Rating
+		results.sort(key=lambda x: (-x["vcp_tightness"], -x["rs_rating"]))
 
-	elif scan_type == "Near 52w High":
-		for r in rows:
-			n = _detect_near_52w_high_from_snapshot(r, max_distance_pct=20.0)
-			if n.get("is_near_high"):
+	elif scan_type == "Rocket Base":
+		# Power Play / High Tight Flag — needs 50+ days of candles per symbol.
+		# Same approach as VCP: candles come from the snapshot table, not Yahoo.
+		all_syms = [r["symbol"] for r in rows]
+		candles_by_sym = _vcp_candles_for_symbols(all_syms, target)
+		row_by_sym = {r["symbol"]: r for r in rows}
+		# Persist a loose population (≥50% run, ≤35% base) so the UI can tighten via filters.
+		for sym, candles in candles_by_sym.items():
+			r = row_by_sym.get(sym)
+			if not r or len(candles) < 50:
+				continue
+			rb = _detect_rocket_base(candles, flt(r["close_price"]),
+			                         min_run_pct=50.0, max_base_pullback_pct=35.0)
+			if rb.get("is_rocket_base"):
 				ev = _evaluate_trend_template_from_snapshot(r)
 				results.append({
-					"symbol": r["symbol"],
-					"company_name": companies.get(r["symbol"], r["symbol"]),
+					"symbol": sym,
+					"company_name": companies.get(sym, sym),
 					"current_price": flt(r["close_price"]),
 					"passed_count": ev["passed"],
 					"rs_rating": flt(r.get("rs_rating")),
 					"pct_from_52w_high": flt(r.get("pct_from_52w_high")),
 					"pct_above_52w_low": flt(r.get("pct_above_52w_low")),
-					"vcp_tightness": flt(n.get("distance_from_high_pct")),
+					"vcp_tightness": flt(rb.get("base_depth_pct")),
 					"criteria_json": json.dumps(
-						{"near_52w_high": n, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
+						{"rocket_base": rb, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
 						default=str,
 					),
 				})
-		# Sort: closest to 52w high first, then by RS
-		results.sort(key=lambda x: (x["vcp_tightness"], -x["rs_rating"]))
+		# Sort: highest 8-week rally first, then by tighter base, then RS
+		def _rb_sort_key(x):
+			try:
+				crit = json.loads(x["criteria_json"]).get("rocket_base", {})
+				return (-flt(crit.get("run_pct_8w") or 0), x["vcp_tightness"], -x["rs_rating"])
+			except Exception:
+				return (0, x["vcp_tightness"], -x["rs_rating"])
+		results.sort(key=_rb_sort_key)
 
 	elif scan_type == "VCP":
 		# VCP needs swing-pivot detection, so we pull last ~140 candles per symbol from snapshots
@@ -752,6 +1047,110 @@ def run_scan_from_snapshot(scan_type: str) -> dict:
 					),
 				})
 		results.sort(key=lambda x: (x["vcp_tightness"], -x["rs_rating"]))
+
+	elif scan_type == "Intraday Momentum":
+		# Needs the last ~25 daily candles per symbol to measure today's gap,
+		# closing strength, and 20-day volume baseline.
+		all_syms = [r["symbol"] for r in rows]
+		candles_by_sym = _vcp_candles_for_symbols(all_syms, target)
+		row_by_sym = {r["symbol"]: r for r in rows}
+		for sym, candles in candles_by_sym.items():
+			r = row_by_sym.get(sym)
+			if not r or len(candles) < 22:
+				continue
+			im = _detect_intraday_momentum(candles, r)
+			if im.get("is_momentum"):
+				ev = _evaluate_trend_template_from_snapshot(r)
+				results.append({
+					"symbol": sym,
+					"company_name": companies.get(sym, sym),
+					"current_price": flt(r["close_price"]),
+					"passed_count": ev["passed"],
+					"rs_rating": flt(r.get("rs_rating")),
+					"pct_from_52w_high": flt(r.get("pct_from_52w_high")),
+					"pct_above_52w_low": flt(r.get("pct_above_52w_low")),
+					# Repurpose vcp_tightness as today's % change (used for sort + UI)
+					"vcp_tightness": flt(im.get("change_pct")),
+					"criteria_json": json.dumps(
+						{"intraday_momentum": im, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
+						default=str,
+					),
+				})
+		# Highest % gain on best closing-strength first
+		def _im_sort_key(x):
+			try:
+				im = json.loads(x["criteria_json"]).get("intraday_momentum", {})
+				return (-flt(im.get("vol_ratio_20d") or 0), -flt(im.get("close_strength") or 0), -x["vcp_tightness"])
+			except Exception:
+				return (0, 0, -x["vcp_tightness"])
+		results.sort(key=_im_sort_key)
+
+	elif scan_type == "FnO Momentum":
+		fno = get_fno_symbols()
+		for r in rows:
+			sym = r["symbol"]
+			in_fno = sym in fno
+			if not in_fno:
+				continue  # skip non-FnO names entirely so total_scanned reflects the F&O universe
+			fm = _detect_fno_momentum_from_snapshot(r, in_fno=True)
+			if fm.get("is_fno_momentum"):
+				ev = _evaluate_trend_template_from_snapshot(r)
+				results.append({
+					"symbol": sym,
+					"company_name": companies.get(sym, sym),
+					"current_price": flt(r["close_price"]),
+					"passed_count": ev["passed"],
+					"rs_rating": flt(r.get("rs_rating")),
+					"pct_from_52w_high": flt(r.get("pct_from_52w_high")),
+					"pct_above_52w_low": flt(r.get("pct_above_52w_low")),
+					# Repurpose vcp_tightness as the 3-month return (used for sort + UI)
+					"vcp_tightness": flt(fm.get("ret_3m_pct")),
+					"criteria_json": json.dumps(
+						{"fno_momentum": fm, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
+						default=str,
+					),
+				})
+		# Strongest 3-month return first, then RS Rating
+		results.sort(key=lambda x: (-x["vcp_tightness"], -x["rs_rating"]))
+		# F&O scan reports the F&O universe as the denominator, not the full Nifty 500
+		total_scanned = sum(1 for r in rows if r["symbol"] in fno)
+
+	elif scan_type == "Intraday Short":
+		# Mirror of "Intraday Momentum" — needs the last ~25 daily candles per
+		# symbol to measure today's drop, closing weakness, and 20-day volume baseline.
+		all_syms = [r["symbol"] for r in rows]
+		candles_by_sym = _vcp_candles_for_symbols(all_syms, target)
+		row_by_sym = {r["symbol"]: r for r in rows}
+		for sym, candles in candles_by_sym.items():
+			r = row_by_sym.get(sym)
+			if not r or len(candles) < 22:
+				continue
+			ish = _detect_intraday_short(candles, r)
+			if ish.get("is_short"):
+				ev = _evaluate_trend_template_from_snapshot(r)
+				results.append({
+					"symbol": sym,
+					"company_name": companies.get(sym, sym),
+					"current_price": flt(r["close_price"]),
+					"passed_count": ev["passed"],
+					"rs_rating": flt(r.get("rs_rating")),
+					"pct_from_52w_high": flt(r.get("pct_from_52w_high")),
+					"pct_above_52w_low": flt(r.get("pct_above_52w_low")),
+					# Repurpose vcp_tightness as today's % change (negative for shorts)
+					"vcp_tightness": flt(ish.get("change_pct")),
+					"criteria_json": json.dumps(
+						{"intraday_short": ish, "trend_template_passed": ev["passed"], "industry": r.get("industry") or ""},
+						default=str,
+					),
+				})
+		# Heaviest volume + weakest close + biggest drop first
+		def _is_sort_key(x):
+			try:
+				ish = json.loads(x["criteria_json"]).get("intraday_short", {})
+				return (-flt(ish.get("vol_ratio_20d") or 0), flt(ish.get("close_strength") or 0), x["vcp_tightness"])
+			except Exception:
+				return (0, 0, x["vcp_tightness"])
+		results.sort(key=_is_sort_key)
 
 	return {
 		"ok": True,
@@ -806,7 +1205,11 @@ def _scan(run_name: str, scan_type: str):
 
 # ─────────────────────── public entry points ───────────────────────
 
-ALL_SCAN_TYPES = ("Trend Template", "VCP", "Tight Consolidation", "Near 52w High")
+ALL_SCAN_TYPES = (
+	"Trend Template", "VCP", "Turnaround",
+	"Rocket Base", "Intraday Momentum", "FnO Momentum",
+	"Intraday Short",
+)
 
 
 def _evaluate_for_scan_type(scan_type: str, sym: str, h: dict, rs) -> dict:
@@ -850,31 +1253,16 @@ def _evaluate_for_scan_type(scan_type: str, sym: str, h: dict, rs) -> dict:
 					default=str,
 				),
 			}
-	elif scan_type == "Tight Consolidation":
-		t = detect_tight_consolidation(h["candles"], ind, window_days=22)
-		if t.get("is_tight"):
-			ev = evaluate_trend_template(ind, rs)
-			return {
-				"symbol": sym,
-				"company_name": h["row"]["company_name"],
-				"current_price": flt(ind.get("price")),
-				"passed_count": ev["passed"],
-				"rs_rating": flt(rs) if rs is not None else 0,
-				"pct_from_52w_high": flt(ind.get("pct_from_52w_high")),
-				"pct_above_52w_low": flt(ind.get("pct_above_52w_low")),
-				"vcp_tightness": flt(t.get("range_pct")),
-				"criteria_json": json.dumps(
-					{"tight_consolidation": t, "trend_template_passed": ev["passed"]},
-					default=str,
-				),
-			}
 	return None
 
 
 def _persist_results(run_name: str, scan_type: str, results: list, total_scanned: int):
 	"""Write the result rows + completion status to a Screener Run doc."""
-	if scan_type in ("VCP", "Tight Consolidation"):
+	if scan_type == "VCP":
 		results.sort(key=lambda r: (r["vcp_tightness"], -r["rs_rating"]))
+	elif scan_type == "Turnaround":
+		# Strongest recent-quarter recovery first
+		results.sort(key=lambda r: (-r["vcp_tightness"], -r["rs_rating"]))
 	else:
 		results.sort(key=lambda r: (-r["passed_count"], -r["rs_rating"]))
 
@@ -1135,10 +1523,13 @@ def get_run_status(run_name: str) -> dict:
 
 
 @frappe.whitelist()
-def get_chart_data(symbol: str, exchange: str = "NSE", days: int = 180) -> dict:
-	"""Daily OHLC candles for the chart-popup. Cached 30 min per symbol.
+def get_chart_data(symbol: str, exchange: str = "NSE", days: int = 180, force: int = 0) -> dict:
+	"""Daily OHLC candles for the chart-popup.
 
-	Returns timestamps in seconds (Lightweight Charts format).
+	Reads from `Stock Daily Snapshot` (canonical NSE bhavcopy data). Falls
+	back to Yahoo only for symbols not in our universe (e.g. non-Nifty 500
+	or BSE-only). Snapshot is updated at 7 AM IST or by the user via
+	"Refresh Snapshot" — so the latest bar always reflects what bhavcopy has.
 	"""
 	if not symbol:
 		return {"ok": False, "error": "No symbol"}
@@ -1146,15 +1537,59 @@ def get_chart_data(symbol: str, exchange: str = "NSE", days: int = 180) -> dict:
 	exchange = (exchange or "NSE").upper()
 	days = max(20, min(int(days or 180), 500))
 
+	from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+	ist_now = _dt.now(_tz(_td(hours=5, minutes=30)))
+	ist_today = ist_now.date().isoformat()
 	cache = frappe.cache()
-	key = f"tj:chartdata:{exchange}:{symbol}:{days}"
-	cached = cache.get_value(key)
-	if cached:
-		try:
-			return json.loads(cached)
-		except Exception:
-			pass
+	key = f"tj:chartdata:{exchange}:{symbol}:{days}:{ist_today}"
+	if not int(force or 0):
+		cached = cache.get_value(key)
+		if cached:
+			try:
+				return json.loads(cached)
+			except Exception:
+				pass
 
+	# Try snapshot table first
+	snap_rows = frappe.db.sql(
+		"""
+		SELECT UNIX_TIMESTAMP(date) AS t, open_price, high_price, low_price, close_price, volume
+		FROM `tabStock Daily Snapshot`
+		WHERE symbol = %s
+		ORDER BY date DESC
+		LIMIT %s
+		""",
+		(symbol, days),
+		as_dict=True,
+	)
+	if snap_rows:
+		# We pulled DESC; reverse to ascending for the chart
+		snap_rows.reverse()
+		candles = [
+			{
+				"time": int(r["t"]),
+				"open": flt(r["open_price"]),
+				"high": flt(r["high_price"]),
+				"low": flt(r["low_price"]),
+				"close": flt(r["close_price"]),
+				"volume": int(r["volume"] or 0),
+			}
+			for r in snap_rows
+		]
+		latest_date = _dt.fromtimestamp(candles[-1]["time"]).date().isoformat() if candles else None
+		out = {
+			"ok": True,
+			"symbol": symbol,
+			"exchange": exchange,
+			"source": "snapshot",
+			"latest_bar_date": latest_date,
+			"candles": candles,
+			"as_of": ist_now.isoformat(),
+		}
+		cache.set_value(key, json.dumps(out), expires_in_sec=300)
+		return out
+
+	# Fallback: Yahoo (for non-Nifty 500 symbols)
 	h = fetch_history(symbol, exchange=exchange, days=days)
 	if not h.get("ok"):
 		return {"ok": False, "error": h.get("error") or "Could not fetch history"}
@@ -1164,12 +1599,14 @@ def get_chart_data(symbol: str, exchange: str = "NSE", days: int = 180) -> dict:
 		"symbol": symbol,
 		"exchange": exchange,
 		"yahoo_symbol": h.get("yahoo_symbol"),
+		"source": "yahoo",
 		"candles": [
 			{"time": c["t"], "open": c["o"], "high": c["h"], "low": c["l"], "close": c["c"], "volume": c["v"]}
 			for c in candles
 		],
+		"as_of": ist_now.isoformat(),
 	}
-	cache.set_value(key, json.dumps(out), expires_in_sec=1800)
+	cache.set_value(key, json.dumps(out), expires_in_sec=300)
 	return out
 
 

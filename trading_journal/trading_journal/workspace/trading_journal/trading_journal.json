@@ -1,7 +1,7 @@
 {
  "app": "trading_journal",
  "charts": [],
- "content": "[{\"id\": \"hdr_s1\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick Access</b></span>\", \"col\": 12}}, {\"id\": \"sc_dash\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Trade Dashboard\", \"col\": 4}}, {\"id\": \"sc_kanban\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Trade Kanban\", \"col\": 4}}, {\"id\": \"sc_charts\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Trade Charts\", \"col\": 4}}, {\"id\": \"sc_review\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Trade Review\", \"col\": 4}}, {\"id\": \"sc_trade\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Trade\", \"col\": 4}}, {\"id\": \"sc_holdings\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Portfolio Holdings\", \"col\": 4}}, {\"id\": \"sc_import\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Trade Import\", \"col\": 4}}, {\"id\": \"sc_broker\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Broker\", \"col\": 4}}, {\"id\": \"spc_1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr_s2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Modules</b></span>\", \"col\": 12}}, {\"id\": \"card_trading\", \"type\": \"card\", \"data\": {\"card_name\": \"Trading\", \"col\": 4}}, {\"id\": \"card_screeners\", \"type\": \"card\", \"data\": {\"card_name\": \"Screeners\", \"col\": 4}}, {\"id\": \"card_portfolio\", \"type\": \"card\", \"data\": {\"card_name\": \"Portfolio\", \"col\": 4}}, {\"id\": \"card_analytics\", \"type\": \"card\", \"data\": {\"card_name\": \"Analytics\", \"col\": 4}}, {\"id\": \"spc_2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"card_masters\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"card_review\", \"type\": \"card\", \"data\": {\"card_name\": \"Review & Journal\", \"col\": 4}}]",
+ "content": "[{\"id\":\"hdr_s1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"sc_dash\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Dashboard\",\"col\":4}},{\"id\":\"sc_kanban\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Kanban\",\"col\":4}},{\"id\":\"sc_charts\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Charts\",\"col\":4}},{\"id\":\"sc_review\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Review\",\"col\":4}},{\"id\":\"sc_trade\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade\",\"col\":4}},{\"id\":\"sc_holdings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Portfolio Holdings\",\"col\":4}},{\"id\":\"sc_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Import\",\"col\":4}},{\"id\":\"sc_broker\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Broker\",\"col\":4}},{\"id\":\"sc_sector_heatmap\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sector Heatmap\",\"col\":4}},{\"id\":\"sc_earnings_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Earnings Calendar\",\"col\":4}},{\"id\":\"sc_screener_backtest\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Screener Backtest\",\"col\":4}},{\"id\":\"spc_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_s2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Modules</b></span>\",\"col\":12}},{\"id\":\"card_trading\",\"type\":\"card\",\"data\":{\"card_name\":\"Trading\",\"col\":4}},{\"id\":\"card_screeners\",\"type\":\"card\",\"data\":{\"card_name\":\"Screeners\",\"col\":4}},{\"id\":\"card_portfolio\",\"type\":\"card\",\"data\":{\"card_name\":\"Portfolio\",\"col\":4}},{\"id\":\"card_tools\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}},{\"id\":\"card_analytics\",\"type\":\"card\",\"data\":{\"card_name\":\"Analytics\",\"col\":4}},{\"id\":\"spc_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"card_review\",\"type\":\"card\",\"data\":{\"card_name\":\"Review & Journal\",\"col\":4}}]",
  "creation": "2026-04-21 00:00:00",
  "custom_blocks": [],
  "docstatus": 0,
@@ -106,8 +106,8 @@
    "hidden": 0,
    "icon": "",
    "is_query_report": 0,
-   "label": "Screeners",
-   "link_count": 4,
+   "label": "Tools",
+   "link_count": 5,
    "link_to": "",
    "link_type": "",
    "onboard": 0,
@@ -115,44 +115,55 @@
   },
   {
    "hidden": 0,
-   "icon": "filter",
+   "icon": "star",
    "is_query_report": 0,
-   "label": "Momentum Screener",
+   "label": "Watchlist",
    "link_count": 0,
-   "link_to": "momentum-screener",
+   "link_to": "watchlist",
    "link_type": "Page",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
-   "icon": "small-message",
+   "icon": "tree",
    "is_query_report": 0,
-   "label": "VCP Screener",
+   "label": "Sector Heatmap",
    "link_count": 0,
-   "link_to": "vcp-screener",
+   "link_to": "sector-heatmap",
    "link_type": "Page",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
-   "icon": "minus",
+   "icon": "calendar",
    "is_query_report": 0,
-   "label": "Tight Consolidation Screener",
+   "label": "Earnings Calendar",
    "link_count": 0,
-   "link_to": "consolidation-screener",
+   "link_to": "earnings-calendar",
    "link_type": "Page",
    "onboard": 0,
    "type": "Link"
   },
   {
    "hidden": 0,
-   "icon": "history",
+   "icon": "getting-started",
    "is_query_report": 0,
-   "label": "Screener Run History",
+   "label": "Screener Backtest",
    "link_count": 0,
-   "link_to": "Screener Run",
+   "link_to": "screener-backtest",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "mail",
+   "is_query_report": 0,
+   "label": "Telegram Settings",
+   "link_count": 0,
+   "link_to": "Telegram Settings",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -298,9 +309,98 @@
    "onboard": 0,
    "report_ref_doctype": "Trade",
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Screeners",
+   "link_count": 8,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Momentum Screener",
+   "link_count": 0,
+   "link_to": "momentum-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "VCP Screener",
+   "link_count": 0,
+   "link_to": "vcp-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Turnaround Screener",
+   "link_count": 0,
+   "link_to": "turnaround-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rocket Base Screener",
+   "link_count": 0,
+   "link_to": "rocket-base-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Intraday Screener",
+   "link_count": 0,
+   "link_to": "intraday-momentum-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Intraday Short Screener",
+   "link_count": 0,
+   "link_to": "intraday-short-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "FnO Screener",
+   "link_count": 0,
+   "link_to": "fno-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Screener Run History",
+   "link_count": 0,
+   "link_to": "Screener Run",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-04-27 17:33:49.269253",
+ "modified": "2026-05-22 23:59:59.000000",
  "modified_by": "Administrator",
  "module": "Trading Journal",
  "name": "Trading Journal",
@@ -391,6 +491,27 @@
    "link_to": "Broker",
    "stats_filter": "",
    "type": "DocType"
+  },
+  {
+   "color": "Pink",
+   "icon": "tree",
+   "label": "Sector Heatmap",
+   "link_to": "sector-heatmap",
+   "type": "Page"
+  },
+  {
+   "color": "Yellow",
+   "icon": "calendar",
+   "label": "Earnings Calendar",
+   "link_to": "earnings-calendar",
+   "type": "Page"
+  },
+  {
+   "color": "Green",
+   "icon": "getting-started",
+   "label": "Screener Backtest",
+   "link_to": "screener-backtest",
+   "type": "Page"
   }
  ],
  "title": "Trading Journal",

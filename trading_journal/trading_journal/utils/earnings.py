@@ -16,6 +16,12 @@ import requests
 from frappe.utils import flt, now_datetime, getdate
 
 YAHOO_QS = "https://query1.finance.yahoo.com/v10/finance/quoteSummary/{symbol}"
+YAHOO_HOME = "https://finance.yahoo.com"
+YAHOO_CRUMB = "https://query1.finance.yahoo.com/v1/test/getcrumb"
+UA = (
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+	"(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+)
 TIMEOUT = 15
 INTER_SLEEP = 0.15
 
@@ -34,7 +40,22 @@ def _ts_to_iso(ts):
 		return None
 
 
-def _fetch_one(symbol: str, exchange: str = "NSE") -> dict:
+def _yahoo_session():
+	"""Build a requests.Session with Yahoo cookies + crumb. Yahoo's quoteSummary
+	endpoint started requiring crumb auth in 2024; without it we get HTTP 401
+	`Invalid Crumb`. Cookies expire so we rebuild per call (cheap: 2 requests).
+	"""
+	s = requests.Session()
+	s.headers.update({"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9"})
+	s.get(YAHOO_HOME, timeout=TIMEOUT, allow_redirects=True)
+	r = s.get(YAHOO_CRUMB, headers={"Accept": "*/*", "User-Agent": UA}, timeout=TIMEOUT)
+	crumb = (r.text or "").strip()
+	if r.status_code != 200 or not crumb:
+		raise RuntimeError(f"yahoo crumb fetch failed: status={r.status_code} body={r.text[:120]!r}")
+	return s, crumb
+
+
+def _fetch_one(symbol: str, exchange: str = "NSE", session=None, crumb: str = None) -> dict:
 	"""Pull earnings dates for a single symbol from Yahoo. Cached 24h."""
 	ys = _yahoo_symbol(symbol, exchange)
 	cache = frappe.cache()
@@ -47,10 +68,12 @@ def _fetch_one(symbol: str, exchange: str = "NSE") -> dict:
 			pass
 
 	try:
-		r = requests.get(
+		if session is None or not crumb:
+			session, crumb = _yahoo_session()
+		r = session.get(
 			YAHOO_QS.format(symbol=ys),
-			headers={"User-Agent": "Mozilla/5.0"},
-			params={"modules": "calendarEvents,earnings"},
+			headers={"Accept": "*/*", "User-Agent": UA},
+			params={"modules": "calendarEvents,earnings", "crumb": crumb},
 			timeout=TIMEOUT,
 		)
 		payload = r.json()
@@ -107,11 +130,18 @@ def get_earnings_calendar(days_ahead: int = 60, force: int = 0) -> dict:
 	today = getdate()
 	cutoff = today + timedelta(days=int(days_ahead or 60))
 	errors = 0
+	session = crumb = None
 	for sym in symbols:
 		# Force refresh by invalidating cache first
 		if int(force or 0):
 			frappe.cache().delete_value(f"tj:earnings:{_yahoo_symbol(sym)}")
-		data = _fetch_one(sym)
+		# Build the Yahoo session lazily — only if at least one symbol is uncached
+		if session is None and not frappe.cache().get_value(f"tj:earnings:{_yahoo_symbol(sym)}"):
+			try:
+				session, crumb = _yahoo_session()
+			except Exception:
+				session, crumb = None, None
+		data = _fetch_one(sym, session=session, crumb=crumb)
 		if not data.get("ok"):
 			errors += 1
 			time.sleep(INTER_SLEEP)

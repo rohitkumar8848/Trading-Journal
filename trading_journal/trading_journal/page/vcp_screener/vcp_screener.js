@@ -12,7 +12,7 @@ class VcpScreenerPage {
 		this.page = page;
 		this.run_name = null;
 		this.poll_timer = null;
-		this.max_distance = 8;
+		this.max_distance = "";
 		this.search = "";
 		this.sector = "";
 		this._inject_styles();
@@ -131,7 +131,7 @@ class VcpScreenerPage {
 					<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-vcp-snap-info" style="color:rgba(255,255,255,0.85); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-vcp-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-vcp-run-all" style="background:#10b981;color:#fff;">Run All 3 Scans</button>
+						<button class="btn-scan" id="tj-vcp-run-all" style="background:#10b981;color:#fff;">Run All 7 Scans</button>
 						<button class="btn-scan" id="tj-vcp-run">Run This Scan</button>
 					</div>
 				</div>
@@ -141,9 +141,10 @@ class VcpScreenerPage {
 					<div>
 						<label>Max Distance from Pivot</label>
 						<select id="tj-vcp-max-dist">
+							<option value="" selected>All (no filter)</option>
 							<option value="3">≤ 3% (very tight)</option>
 							<option value="5">≤ 5%</option>
-							<option value="8" selected>≤ 8% (default)</option>
+							<option value="8">≤ 8% (default)</option>
 						</select>
 					</div>
 					<div>
@@ -186,7 +187,7 @@ class VcpScreenerPage {
 		$body.find("#tj-vcp-run-all").on("click", () => this._start_all_scans());
 		$body.find("#tj-vcp-snap-refresh").on("click", () => this._refresh_snapshot());
 		$body.find("#tj-vcp-max-dist").on("change", (e) => {
-			this.max_distance = parseInt(e.target.value, 10);
+			this.max_distance = e.target.value === "" ? "" : parseInt(e.target.value, 10);
 			this._render_results();
 		});
 		$body.find("#tj-vcp-search").on("input", (e) => {
@@ -278,19 +279,19 @@ class VcpScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Could not start scans", message: m.error || "Unknown error", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 3 Scans");
+					$btnAll.prop("disabled", false).text("Run All 7 Scans");
 					return;
 				}
 				const myRun = (m.run_names || {})["VCP"];
 				if (myRun) this.run_name = myRun;
 				frappe.show_alert({
-					message: "Started all 3 scans (single shared fetch ~10 min).",
+					message: "Started all 7 scans (single shared fetch ~10 min).",
 					indicator: "green",
 				}, 6);
 				this._poll_status();
 			},
 			error: () => {
-				$btnAll.prop("disabled", false).text("Run All 3 Scans");
+				$btnAll.prop("disabled", false).text("Run All 7 Scans");
 			},
 		});
 	}
@@ -309,7 +310,7 @@ class VcpScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-vcp-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-vcp-run-all").prop("disabled", false).text("Run All 3 Scans");
+						$b.find("#tj-vcp-run-all").prop("disabled", false).text("Run All 7 Scans");
 					}
 				},
 			});
@@ -396,7 +397,7 @@ class VcpScreenerPage {
 		const sector = this.sector;
 		const filtered = (this.results || []).filter((r) => {
 			const v = this._extract_vcp(r);
-			if ((v.distance_from_pivot_pct || 0) > this.max_distance) return false;
+			if (this.max_distance !== "" && (v.distance_from_pivot_pct || 0) > this.max_distance) return false;
 			if (search && !(r.symbol || "").toUpperCase().includes(search)) return false;
 			if (sector && this._industry_for(r) !== sector) return false;
 			return true;

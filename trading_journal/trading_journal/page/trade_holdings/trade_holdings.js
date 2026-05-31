@@ -31,6 +31,7 @@ class TradeHoldings {
 						<button class="th-tab active" data-view="consolidated">🔀 Consolidated</button>
 						<button class="th-tab" data-view="per-broker">🏦 Per Broker</button>
 						<button class="th-tab" data-view="positions">⚡ Positions</button>
+						<button class="th-tab" data-view="open-trades">📓 Open Trades</button>
 					</div>
 				</div>
 

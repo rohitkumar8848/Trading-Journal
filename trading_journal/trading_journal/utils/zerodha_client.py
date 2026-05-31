@@ -320,7 +320,8 @@ def _parse_kite_dt(s):
 	return None
 
 
-def sync_trades(broker_name: str, from_date: str = None, to_date: str = None) -> dict:
+def sync_trades(broker_name: str, from_date: str = None, to_date: str = None,
+                refresh_holdings: bool = True) -> dict:
 	"""Fetch executed trades from Kite, promote to Trade journal.
 
 	Kite's /trades endpoint returns TODAY ONLY — historical trades aren't
@@ -331,7 +332,9 @@ def sync_trades(broker_name: str, from_date: str = None, to_date: str = None) ->
 	Zerodha trades, enter brokerage/STT manually on each Trade row or
 	import a charges CSV.
 
-	Syncs holdings FIRST so trades_sync can use fresh cost-basis data.
+	`refresh_holdings=False` skips the upstream holdings sync — used by
+	`convert_to_holding`, which has just inserted a manual Holding for a
+	same-day position that the broker won't yet return.
 	"""
 	try:
 		from trading_journal.trading_journal.utils import trades_sync
@@ -342,7 +345,8 @@ def sync_trades(broker_name: str, from_date: str = None, to_date: str = None) ->
 		from_d = getdate(from_date) if from_date else None
 		to_d = getdate(to_date) if to_date else None
 
-		sync_holdings(broker_name)
+		if refresh_holdings:
+			sync_holdings(broker_name)
 
 		api_key, access_token = _get_broker_creds(broker_name)
 		rows = _http_get("/trades", api_key, access_token) or []

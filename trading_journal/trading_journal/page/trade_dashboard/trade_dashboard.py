@@ -24,7 +24,7 @@ def get_dashboard_data(from_date=None, to_date=None, broker=None):
 		f"""
 		SELECT name, sell_date AS trade_date, symbol, trade_type, status, setup_type,
 		       entry_price, stop_loss, target, exit_price, pnl, pnl_percent,
-		       risk_reward, quantity, broker
+		       risk_reward, quantity, broker, total_charges, net_pnl
 		FROM `tabTrade`
 		WHERE sell_date IS NOT NULL
 		  AND sell_date BETWEEN %(from_date)s AND %(to_date)s
@@ -61,6 +61,10 @@ def get_dashboard_data(from_date=None, to_date=None, broker=None):
 	losses = [t for t in trades if t.status == "Loss"]
 	pnl_list = [flt(t.pnl or 0) for t in trades]
 	total_pnl = sum(pnl_list)
+	total_charges = sum(flt(t.total_charges or 0) for t in trades)
+	# Trade.net_pnl is gross_pnl - total_charges (computed in Trade.before_save).
+	# Sum what's stored to stay consistent with the per-trade view.
+	net_pnl_total = sum(flt(t.net_pnl or 0) for t in trades)
 
 	# Equity curve + drawdown.
 	# peak = highest running P&L seen so far (clamped to 0 if we're underwater from day 1).
@@ -305,6 +309,8 @@ def get_dashboard_data(from_date=None, to_date=None, broker=None):
 			"losses": len(losses),
 			"win_rate": round(len(wins) / total * 100, 1) if total else 0,
 			"total_pnl": total_pnl,
+			"total_charges": round(total_charges, 2),
+			"net_pnl": round(net_pnl_total, 2),
 			"avg_rr": avg_rr_all,
 			"avg_r": avg_r,
 			"best_trade": max((p for p in pnl_list if p > 0), default=0),

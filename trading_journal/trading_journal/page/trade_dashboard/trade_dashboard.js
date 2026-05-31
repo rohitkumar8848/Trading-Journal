@@ -573,6 +573,8 @@ class TradeDashboard {
 			: (s.current_streak_type === "L" ? `❄ ${s.current_streak}L` : "-");
 		const cards = [
 			{ label: "Total P&L", value: format_currency(s.total_pnl), cls: s.total_pnl >= 0 ? "positive" : "negative", accent: s.total_pnl >= 0 ? "pos" : "neg" },
+			{ label: "Total Charges", value: format_currency(s.total_charges || 0), cls: "negative", accent: "neg" },
+			{ label: "Net P&L (after charges)", value: format_currency(s.net_pnl || 0), cls: (s.net_pnl || 0) >= 0 ? "positive" : "negative", accent: (s.net_pnl || 0) >= 0 ? "pos" : "neg" },
 			{ label: "Total Trades", value: s.total_trades, cls: "", accent: "" },
 			{ label: "Win Rate", value: s.win_rate + "%", cls: s.win_rate >= 50 ? "positive" : "negative", accent: s.win_rate >= 50 ? "pos" : "neg" },
 			{ label: "Wins / Losses", value: `${s.wins} / ${s.losses}`, cls: "", accent: "" },

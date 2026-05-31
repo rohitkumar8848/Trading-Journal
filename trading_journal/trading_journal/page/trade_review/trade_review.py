@@ -90,8 +90,12 @@ def _render_review_html(data: dict, entry) -> str:
 		return "#10b981" if (v or 0) >= 0 else "#f43f5e"
 
 	# KPI grid
+	# Note: stats["pnl"] is gross P&L (sum of Trade.pnl). "net_pnl" is gross
+	# minus broker charges (Trade.net_pnl, computed by Trade.before_save).
 	kpis = [
-		("Net P&L", money(stats.get("pnl", 0)), pn_color(stats.get("pnl", 0))),
+		("Gross P&L", money(stats.get("pnl", 0)), pn_color(stats.get("pnl", 0))),
+		("Total Charges", money(stats.get("total_charges", 0)), "#f43f5e"),
+		("Net P&L (after charges)", money(stats.get("net_pnl", 0)), pn_color(stats.get("net_pnl", 0))),
 		("Trades", stats.get("total", 0), "#0f172a"),
 		("Win Rate", f"{stats.get('win_rate', 0)}%", pn_color(stats.get("win_rate", 0) - 50 + 0.01)),
 		("Profit Factor", f"{stats.get('profit_factor', 0)}x", "#0f172a"),
@@ -211,7 +215,9 @@ def _render_review_html(data: dict, entry) -> str:
 <h2>vs Previous Period</h2>
 <table>
   <tr><th></th><th>This Period</th><th>Previous</th></tr>
-  <tr><td><b>P&L</b></td><td>{money(stats.get('pnl', 0))}</td><td>{money(prev.get('pnl', 0))}</td></tr>
+  <tr><td><b>Gross P&L</b></td><td>{money(stats.get('pnl', 0))}</td><td>{money(prev.get('pnl', 0))}</td></tr>
+  <tr><td><b>Charges</b></td><td>{money(stats.get('total_charges', 0))}</td><td>{money(prev.get('total_charges', 0))}</td></tr>
+  <tr><td><b>Net P&L</b></td><td>{money(stats.get('net_pnl', 0))}</td><td>{money(prev.get('net_pnl', 0))}</td></tr>
   <tr><td><b>Win Rate</b></td><td>{stats.get('win_rate', 0)}%</td><td>{prev.get('win_rate', 0)}%</td></tr>
   <tr><td><b>Trades</b></td><td>{stats.get('total', 0)}</td><td>{prev.get('total', 0)}</td></tr>
 </table>
@@ -312,7 +318,7 @@ def get_review(period="week", anchor=None):
 			"""
 			SELECT name, sell_date AS trade_date, symbol, trade_type, status, setup_type,
 			       entry_price, stop_loss, target, exit_price, pnl, risk_reward,
-			       r_multiple, trade_grade
+			       r_multiple, trade_grade, total_charges, net_pnl
 			FROM `tabTrade`
 			WHERE sell_date IS NOT NULL
 			  AND sell_date BETWEEN %s AND %s
@@ -332,12 +338,16 @@ def get_review(period="week", anchor=None):
 		closed = len(wins) + len(losses)
 		gross_win = sum(flt(r.pnl or 0) for r in wins)
 		gross_loss = sum(flt(r.pnl or 0) for r in losses)
+		total_charges = sum(flt(r.total_charges or 0) for r in rows)
+		net_pnl = sum(flt(r.net_pnl or 0) for r in rows)
 		return {
 			"total": len(rows),
 			"wins": len(wins),
 			"losses": len(losses),
 			"win_rate": round(len(wins) / closed * 100, 1) if closed else 0,
 			"pnl": round(pnl, 2),
+			"total_charges": round(total_charges, 2),
+			"net_pnl": round(net_pnl, 2),
 			"gross_win": round(gross_win, 2),
 			"gross_loss": round(gross_loss, 2),
 			"profit_factor": round(gross_win / abs(gross_loss), 2) if gross_loss else 0,

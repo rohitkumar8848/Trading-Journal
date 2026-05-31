@@ -87,13 +87,22 @@ def _format_screener_digest(runs: dict) -> str:
 	from frappe.utils import get_url
 	site_url = get_url()
 	parts = ["<b>📊 Daily Screener Digest</b>", ""]
-	icons = {"Trend Template": "🚀", "VCP": "📈", "Tight Consolidation": "🎯"}
+	icons = {
+		"Trend Template": "🚀", "VCP": "📈", "Turnaround": "🔄",
+		"Rocket Base": "🚀",
+		"Intraday Momentum": "⚡", "FnO Momentum": "📊",
+		"Intraday Short": "🔻",
+	}
 	urls = {
 		"Trend Template": "/app/momentum-screener",
 		"VCP": "/app/vcp-screener",
-		"Tight Consolidation": "/app/consolidation-screener",
+		"Turnaround": "/app/turnaround-screener",
+		"Rocket Base": "/app/rocket-base-screener",
+		"Intraday Momentum": "/app/intraday-momentum-screener",
+		"FnO Momentum": "/app/fno-screener",
+		"Intraday Short": "/app/intraday-short-screener",
 	}
-	for st in ("Trend Template", "VCP", "Tight Consolidation"):
+	for st in ("Trend Template", "VCP", "Turnaround"):
 		doc = runs.get(st)
 		icon = icons.get(st, "•")
 		if not doc or doc.status != "Completed":
@@ -128,7 +137,7 @@ def send_daily_digest():
 
 	runs = {}
 	from frappe.utils import nowdate
-	for st in ("Trend Template", "VCP", "Tight Consolidation"):
+	for st in ("Trend Template", "VCP", "Turnaround"):
 		row = frappe.get_all(
 			"Screener Run",
 			filters={"scan_type": st, "status": "Completed"},

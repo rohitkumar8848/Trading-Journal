@@ -212,6 +212,17 @@ def promote_legs(broker_name: str, incoming_legs: list) -> dict:
 				# Append to the open trade
 				doc = frappe.get_doc("Trade", existing["name"])
 				doc.append("transactions", _txn_row(leg))
+				# When the real broker leg arrives, sweep any synthetic
+				# placeholder transactions inserted by Position →
+				# `convert_to_holding` (broker_trade_id starts with
+				# "POS-CONVERT-"). Otherwise qty gets double-counted —
+				# the placeholder + the real leg both contribute.
+				real_tid = str(leg.get("trade_id") or "")
+				if real_tid and not real_tid.startswith("POS-CONVERT-"):
+					doc.transactions = [
+						t for t in doc.transactions
+						if not str(getattr(t, "broker_trade_id", "") or "").startswith("POS-CONVERT-")
+					]
 				doc.save(ignore_permissions=True)
 				appended += 1
 				if doc.status in ("Win", "Loss", "Breakeven"):

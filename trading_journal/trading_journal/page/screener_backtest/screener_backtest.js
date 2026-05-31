@@ -149,8 +149,8 @@ class ScreenerBacktestPage {
 			$(this.page.body).find("#tj-bt-body").html(`<div class="tj-bt-empty">No backtest yet for ${this.months}m × ${this.sample_size} sample.</div>`);
 			return;
 		}
-		const order = ["Trend Template", "VCP", "Tight Consolidation"];
-		const colors = {"Trend Template": "#6366f1", "VCP": "#0ea5e9", "Tight Consolidation": "#f59e0b"};
+		const order = ["Trend Template", "VCP", "Turnaround"];
+		const colors = {"Trend Template": "#6366f1", "VCP": "#0ea5e9", "Turnaround": "#10b981"};
 
 		const cards = order.map((st) => {
 			const s = m.per_scan[st] || {};

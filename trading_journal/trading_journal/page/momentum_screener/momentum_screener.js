@@ -18,7 +18,7 @@ class MomentumScreenerPage {
 		this.opts = opts;
 		this.run_name = null;
 		this.poll_timer = null;
-		this.min_passed = 8; // default to "all 8 rules pass"
+		this.min_passed = ""; // empty = no filter, show all
 		this.search = "";
 		this.sector = "";
 		this._inject_styles();
@@ -138,7 +138,7 @@ class MomentumScreenerPage {
 					<div class="actions" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-scr-snap-info" style="color:rgba(255,255,255,0.85); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-scr-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-scr-run-all" style="background:#10b981;color:#fff;">Run All 3 Scans</button>
+						<button class="btn-scan" id="tj-scr-run-all" style="background:#10b981;color:#fff;">Run All 7 Scans</button>
 						<button class="btn-scan" id="tj-scr-run">Run This Scan</button>
 					</div>
 				</div>
@@ -148,6 +148,7 @@ class MomentumScreenerPage {
 					<div>
 						<label>Min Rules Passed</label>
 						<select id="tj-scr-min-passed">
+							<option value="" selected>All (no filter)</option>
 							<option value="8">All 8 (full pass)</option>
 							<option value="7">7+ (one miss allowed)</option>
 							<option value="6">6+ (loose)</option>
@@ -194,7 +195,7 @@ class MomentumScreenerPage {
 		$body.find("#tj-scr-snap-refresh").on("click", () => this._refresh_snapshot());
 		this._update_snap_info();
 		$body.find("#tj-scr-min-passed").on("change", (e) => {
-			this.min_passed = parseInt(e.target.value, 10);
+			this.min_passed = e.target.value === "" ? "" : parseInt(e.target.value, 10);
 			this._render_results();
 		});
 		$body.find("#tj-scr-search").on("input", (e) => {
@@ -317,19 +318,19 @@ class MomentumScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Could not start scans", message: m.error || "Unknown error", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 3 Scans");
+					$btnAll.prop("disabled", false).text("Run All 7 Scans");
 					return;
 				}
 				const myRun = (m.run_names || {})[this.opts.scan_type];
 				if (myRun) this.run_name = myRun;
 				frappe.show_alert({
-					message: "Started all 3 scans (single shared fetch ~10 min). Other screener pages will update on refresh.",
+					message: "Started all 7 scans (single shared fetch ~10 min). Other screener pages will update on refresh.",
 					indicator: "green",
 				}, 6);
 				this._poll_status();
 			},
 			error: () => {
-				$btnAll.prop("disabled", false).text("Run All 3 Scans");
+				$btnAll.prop("disabled", false).text("Run All 7 Scans");
 			},
 		});
 	}
@@ -348,7 +349,7 @@ class MomentumScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-scr-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-scr-run-all").prop("disabled", false).text("Run All 3 Scans");
+						$b.find("#tj-scr-run-all").prop("disabled", false).text("Run All 7 Scans");
 					}
 				},
 			});
@@ -421,7 +422,7 @@ class MomentumScreenerPage {
 		const search = this.search;
 		const sector = this.sector;
 		const filtered = (this.results || []).filter((r) => {
-			if ((r.passed_count || 0) < min) return false;
+			if (min !== "" && (r.passed_count || 0) < min) return false;
 			if (search && !(r.symbol || "").toUpperCase().includes(search)) return false;
 			if (sector && this._industry_for(r) !== sector) return false;
 			return true;

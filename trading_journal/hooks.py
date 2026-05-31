@@ -45,6 +45,7 @@ add_to_apps_screen = [
 app_include_js = [
 	"/assets/trading_journal/js/tj_ai.js",
 	"/assets/trading_journal/js/tj_charts_v2.js",
+	"/assets/trading_journal/js/index_ticker.js",
 ]
 
 # include js, css files in header of web template

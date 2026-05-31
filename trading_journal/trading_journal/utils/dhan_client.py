@@ -160,6 +160,22 @@ def _upsert_position(broker_name: str, row: dict):
 	sell_qty = flt(row.get("sellQty") or 0)
 	net_qty = flt(row.get("netQty") or (buy_qty - sell_qty))
 	pos_type = row.get("positionType") or ("LONG" if net_qty > 0 else ("SHORT" if net_qty < 0 else "CLOSED"))
+	buy_avg = flt(row.get("buyAvg") or 0)
+	sell_avg = flt(row.get("sellAvg") or 0)
+	unrealized = flt(row.get("unrealizedProfit") or 0)
+
+	# Dhan's /positions API does NOT return a real LTP field — only `costPrice`
+	# (= buyAvg). Derive LTP from `unrealizedProfit` so the dashboard shows the
+	# live mark-to-market price instead of buyAvg as a sad placeholder.
+	ltp = flt(row.get("lastTradedPrice") or 0)
+	if not ltp and net_qty:
+		if net_qty > 0:
+			ltp = buy_avg + (unrealized / net_qty)
+		else:
+			ltp = sell_avg - (unrealized / abs(net_qty))
+	if not ltp:
+		ltp = flt(row.get("costPrice") or 0)
+
 	data = {
 		"broker": broker_name,
 		"trading_symbol": symbol,
@@ -170,11 +186,11 @@ def _upsert_position(broker_name: str, row: dict):
 		"net_qty": net_qty,
 		"buy_qty": buy_qty,
 		"sell_qty": sell_qty,
-		"buy_avg": flt(row.get("buyAvg") or 0),
-		"sell_avg": flt(row.get("sellAvg") or 0),
-		"last_traded_price": flt(row.get("lastTradedPrice") or row.get("costPrice") or 0),
+		"buy_avg": buy_avg,
+		"sell_avg": sell_avg,
+		"last_traded_price": ltp,
 		"realized_pnl": flt(row.get("realizedProfit") or 0),
-		"unrealized_pnl": flt(row.get("unrealizedProfit") or 0),
+		"unrealized_pnl": unrealized,
 		"day_buy_value": flt(row.get("dayBuyValue") or 0),
 		"day_sell_value": flt(row.get("daySellValue") or 0),
 		"multiplier": flt(row.get("multiplier") or 1),
@@ -305,15 +321,20 @@ def _pick_dhan_time(row: dict):
 
 
 def _extract_dhan_charges(row: dict) -> tuple:
-	"""Return (brokerage, total_taxes_and_fees, charges_breakdown_dict) from a Dhan trade row."""
-	brokerage = flt(row.get("brokerage") or 0)
+	"""Return (brokerage, total_taxes_and_fees, charges_breakdown_dict) from a Dhan
+	trade row. Field names confirmed against the live `/v2/trades` response —
+	Dhan uses `brokerageCharges`, `serviceTax`, `sebiTax`, `exchangeTransactionCharges`
+	(plural). Older guesses (`brokerage`, `gst`, `sebiFee`) silently read 0.
+	"""
+	brokerage = flt(row.get("brokerageCharges") or row.get("brokerage") or 0)
 	tax_fields = {
-		"stt": flt(row.get("sttCtt") or row.get("stt") or 0),
+		"stt": flt(row.get("stt") or row.get("sttCtt") or 0),
 		"stamp_duty": flt(row.get("stampDuty") or 0),
-		"sebi_fee": flt(row.get("sebiFee") or 0),
-		"exchange_charge": flt(row.get("exchangeTransactionCharge") or 0),
+		"sebi_fee": flt(row.get("sebiTax") or row.get("sebiFee") or 0),
+		"exchange_charge": flt(row.get("exchangeTransactionCharges")
+		                       or row.get("exchangeTransactionCharge") or 0),
+		"gst": flt(row.get("serviceTax") or row.get("gst") or 0),
 		"ipft": flt(row.get("ipft") or 0),
-		"gst": flt(row.get("gst") or 0),
 		"additional_tax": flt(row.get("additionalTax") or 0),
 	}
 	taxes = sum(tax_fields.values())
@@ -359,13 +380,19 @@ def _fetch_dhan_trades(client_id: str, access_token: str, from_date, to_date):
 	return _http_get("/trades", client_id, access_token) or []
 
 
-def sync_trades(broker_name: str, from_date: str = None, to_date: str = None) -> dict:
+def sync_trades(broker_name: str, from_date: str = None, to_date: str = None,
+                refresh_holdings: bool = True) -> dict:
 	"""Fetch executed trades from Dhan and promote to the Trade journal.
 
 	When `from_date`/`to_date` are omitted, syncs ALL trades — uses the
 	broker's `start_date` as the lower bound (falls back to 2015-01-01)
 	and today as the upper bound. Dedup by `broker_trade_id` in the
 	Trade Transaction child table makes repeated syncs safe.
+
+	`refresh_holdings=False` skips the upstream holdings sync. Used by
+	`convert_to_holding` — that flow has already inserted a manual Holding
+	for a same-day position the broker won't return until T+1, and the
+	holdings sync's stale-row cleanup would otherwise delete it.
 	"""
 	try:
 		from trading_journal.trading_journal.utils import trades_sync
@@ -380,8 +407,8 @@ def sync_trades(broker_name: str, from_date: str = None, to_date: str = None) ->
 		from_d = getdate(from_date)
 		to_d = getdate(to_date)
 
-		# Refresh holdings so cost-basis is fresh
-		sync_holdings(broker_name)
+		if refresh_holdings:
+			sync_holdings(broker_name)
 
 		client_id, access_token = _get_broker_creds(broker_name)
 		rows = _fetch_dhan_trades(client_id, access_token, from_d, to_d)
@@ -462,6 +489,78 @@ def sync_trades(broker_name: str, from_date: str = None, to_date: str = None) ->
 @frappe.whitelist()
 def sync_trades_api(broker: str, from_date: str = None, to_date: str = None) -> dict:
 	return sync_trades(broker, from_date=from_date, to_date=to_date)
+
+
+@frappe.whitelist()
+def backfill_charges(broker: str, from_date: str = None, to_date: str = None) -> dict:
+	"""One-shot: refresh brokerage + taxes on already-imported Dhan transactions
+	using the live API. Needed because earlier syncs read the wrong field names
+	(e.g. `brokerage` instead of `brokerageCharges`) and silently stored zeros,
+	which then caused the parent Trade to fall back to the rate-card calculator.
+	"""
+	from collections import defaultdict
+	from frappe.utils import nowdate, getdate
+
+	if not from_date:
+		start = frappe.db.get_value("Broker", broker, "start_date")
+		from_date = str(start) if start else "2015-01-01"
+	if not to_date:
+		to_date = nowdate()
+
+	client_id, access_token = _get_broker_creds(broker)
+	rows = _fetch_dhan_trades(client_id, access_token, getdate(from_date), getdate(to_date))
+
+	# Multiple fills can share the same orderId — sum charges per orderId so
+	# the Trade Transaction (keyed on orderId via broker_trade_id) reflects
+	# total broker charges for that order.
+	by_order = defaultdict(lambda: {"brokerage": 0.0, "taxes": 0.0})
+	for row in rows:
+		oid = str(row.get("orderId") or row.get("order_id") or row.get("tradeId") or "")
+		if not oid:
+			continue
+		brk, tax, _ = _extract_dhan_charges(row)
+		by_order[oid]["brokerage"] += brk
+		by_order[oid]["taxes"] += tax
+
+	updated_txns = 0
+	touched_trades = set()
+	for oid, totals in by_order.items():
+		txn_rows = frappe.db.sql(
+			"""
+			SELECT tt.name, tt.parent
+			FROM `tabTrade Transaction` tt
+			JOIN `tabTrade` t ON t.name = tt.parent
+			WHERE t.broker = %s AND tt.broker_trade_id = %s
+			""",
+			(broker, oid),
+			as_dict=True,
+		)
+		for r in txn_rows:
+			frappe.db.set_value("Trade Transaction", r.name, {
+				"brokerage": totals["brokerage"],
+				"taxes": totals["taxes"],
+			}, update_modified=False)
+			updated_txns += 1
+			touched_trades.add(r.parent)
+
+	# Re-save each touched parent so _aggregate_txn_charges + _calculate_net_pnl re-run.
+	for tname in touched_trades:
+		try:
+			doc = frappe.get_doc("Trade", tname)
+			doc.save(ignore_permissions=True)
+		except Exception as e:
+			frappe.log_error(f"backfill resave failed on {tname}: {e}", "Dhan Charges Backfill")
+
+	frappe.db.commit()
+	return {
+		"ok": True,
+		"broker": broker,
+		"range": f"{from_date} → {to_date}",
+		"api_rows": len(rows),
+		"distinct_orders": len(by_order),
+		"transactions_updated": updated_txns,
+		"trades_resaved": len(touched_trades),
+	}
 
 
 @frappe.whitelist()

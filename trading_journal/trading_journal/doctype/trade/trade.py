@@ -197,18 +197,30 @@ class Trade(Document):
 	# ────────────────────────────────────────────────────────────
 
 	def _aggregate_txn_charges(self):
-		"""Sum brokerage + taxes from the transactions child table."""
+		"""Sum brokerage + taxes from the transactions child table.
+
+		For Broker Sync trades, ALWAYS overwrite — the broker's API is the
+		source of truth, and we never want a stale manual estimate masking it
+		(even when the API reports zero).
+		"""
 		txns = self.get("transactions") or []
 		if not txns:
 			return
 		txn_brokerage = sum(flt(t.brokerage or 0) for t in txns)
 		txn_taxes = sum(flt(t.taxes or 0) for t in txns)
-		if txn_brokerage or txn_taxes:
+		if self.source == "Broker Sync":
+			self.brokerage = txn_brokerage
+			self.taxes = txn_taxes
+		elif txn_brokerage or txn_taxes:
 			self.brokerage = txn_brokerage
 			self.taxes = txn_taxes
 
 	def _auto_compute_charges(self):
-		"""If brokerage + taxes are both empty, estimate using Indian rates."""
+		"""If brokerage + taxes are both empty, estimate using Indian rates.
+		Skip entirely for Broker Sync trades — those must reflect the
+		broker-supplied charges (see _aggregate_txn_charges)."""
+		if self.source == "Broker Sync":
+			return
 		if flt(self.brokerage or 0) > 0 or flt(self.taxes or 0) > 0:
 			return
 		if not self.entry_price or not self.quantity:

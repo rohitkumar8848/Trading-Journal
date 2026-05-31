@@ -25,7 +25,7 @@
    "fieldname": "scan_type",
    "fieldtype": "Select",
    "label": "Scan Type",
-   "options": "Trend Template\nVCP\nTight Consolidation\nNear 52w High",
+   "options": "Trend Template\nVCP\nTurnaround\nRocket Base\nIntraday Momentum\nFnO Momentum\nIntraday Short",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1

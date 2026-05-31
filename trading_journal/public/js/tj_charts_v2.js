@@ -25,7 +25,7 @@
 	let lwcLoading = null;
 	let stylesInjected = false;
 	let dataCache = {}; // key -> {candles, ts}
-	const DATA_CACHE_TTL_MS = 25 * 60 * 1000;
+	const DATA_CACHE_TTL_MS = 5 * 60 * 1000;
 
 	function inject_styles() {
 		if (stylesInjected || document.getElementById("tj-chart-popup-css")) return;

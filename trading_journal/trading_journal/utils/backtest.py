@@ -75,20 +75,24 @@ def _eval_at_date(scan_type: str, sym: str, closes_up_to_d: list, highs: list, l
 		])
 		return passed >= 7
 
-	if scan_type == "Tight Consolidation":
-		# 22-day range, distance from high, trend filter
-		if len(closes_up_to_d) < 22:
+	if scan_type == "Turnaround":
+		# Beaten-down laggard reversing into a Stage 2 uptrend.
+		if len(closes_up_to_d) < 252:
 			return False
-		w_hi = max(highs[-22:])
-		w_lo = min(lows[-22:])
-		mid = (w_hi + w_lo) / 2
-		if not mid:
+		sma200_44 = _sma(closes_up_to_d, 200, offset=44)
+		ret_3m = (last / closes_up_to_d[-64] - 1) * 100 if closes_up_to_d[-64] else None
+		ret_12m = (last / closes_up_to_d[-253] - 1) * 100 if closes_up_to_d[-253] else None
+		if ret_3m is None or ret_12m is None:
 			return False
-		range_pct = (w_hi - w_lo) / mid * 100
-		dist_from_high = (w_hi - last) / w_hi * 100 if w_hi else 0
-		above_50 = bool(sma50 and last > sma50)
-		stack = bool(sma50 and sma200 and sma50 > sma200)
-		return range_pct <= 8 and dist_from_high <= 5 and above_50 and stack
+		return (
+			pct_from_high <= -25
+			and pct_above_low >= 20
+			and bool(sma200 and sma50 and last > sma200 and last > sma50)
+			and bool(sma200 and sma200_44 and sma200 >= sma200_44)
+			and ret_12m < 25
+			and ret_3m >= 10
+			and rs is not None and rs >= 45
+		)
 
 	if scan_type == "VCP":
 		# Use the same swing-pivot detector — pass a candle-shaped list
@@ -197,7 +201,7 @@ def run_backtest(months: int = 12, sample_size: int = 100, force: int = 0) -> di
 	per_scan = {st: {
 		"total_hits": 0, "hit_dates": 0,
 		"forward_30d": [], "forward_90d": [],
-	} for st in ("Trend Template", "VCP", "Tight Consolidation")}
+	} for st in ("Trend Template", "VCP", "Turnaround")}
 	timeline = []
 
 	for d_dt in test_dates:

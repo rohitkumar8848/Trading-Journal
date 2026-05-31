@@ -119,8 +119,37 @@ def get_portfolio(broker=None, holder=None):
 		)[0]
 		trade_realized = flt(trade_row[0])
 		trade_count = int(trade_row[1] or 0)
+
+		open_trades = frappe.get_all(
+			"Trade",
+			filters={
+				"broker": ["in", broker_names],
+				"final_status": "Open",
+			},
+			fields=[
+				"name", "symbol", "company_name", "exchange", "broker",
+				"trade_type", "nature", "setup_type",
+				"entry_price", "stop_loss", "target", "quantity",
+				"current_price", "price_fetched_at",
+				"pnl", "pnl_percent", "r_multiple", "risk_reward",
+				"hold_days", "buy_date", "trade_date", "status",
+			],
+			order_by="buy_date desc, trade_date desc",
+		)
 	else:
 		trade_realized, trade_count = 0, 0
+		open_trades = []
+
+	for t in open_trades:
+		t["account_holder"] = holder_lookup.get(t.get("broker"), "")
+
+	open_trades_summary = {
+		"count": len(open_trades),
+		"unrealized_pnl": round(sum(flt(t.get("pnl")) for t in open_trades), 2),
+		"invested": round(
+			sum(flt(t.get("entry_price")) * flt(t.get("quantity")) for t in open_trades), 2
+		),
+	}
 
 	return {
 		"brokers": brokers,
@@ -146,4 +175,6 @@ def get_portfolio(broker=None, holder=None):
 			"count": trade_count,
 			"realized_pnl": round(trade_realized, 2),
 		},
+		"open_trades": open_trades,
+		"open_trades_summary": open_trades_summary,
 	}

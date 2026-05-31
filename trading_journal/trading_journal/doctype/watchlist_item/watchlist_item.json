@@ -28,7 +28,7 @@
   {"fieldname": "symbol", "fieldtype": "Data", "label": "Symbol", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1, "columns": 2},
   {"fieldname": "company_name", "fieldtype": "Data", "label": "Company", "in_list_view": 1, "columns": 3},
   {"fieldname": "exchange", "fieldtype": "Select", "label": "Exchange", "options": "NSE\nBSE", "default": "NSE"},
-  {"fieldname": "scan_source", "fieldtype": "Select", "label": "Source", "options": "Manual\nTrend Template\nVCP\nTight Consolidation", "default": "Manual", "in_list_view": 1, "in_standard_filter": 1, "columns": 1},
+  {"fieldname": "scan_source", "fieldtype": "Select", "label": "Source", "options": "Manual\nTrend Template\nVCP\nTurnaround", "default": "Manual", "in_list_view": 1, "in_standard_filter": 1, "columns": 1},
   {"fieldname": "added_at", "fieldtype": "Datetime", "label": "Added At", "default": "now"},
   {"fieldname": "col_break_1", "fieldtype": "Column Break"},
   {"fieldname": "pivot_price", "fieldtype": "Currency", "label": "Pivot / Buy Trigger", "precision": "2", "description": "Alert fires when price closes above this", "in_list_view": 1, "columns": 1},

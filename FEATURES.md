@@ -367,6 +367,7 @@ Trade Dashboard, Trade Kanban, Trade Charts, Trade Review, Trade, Portfolio Hold
 
 ---
 
+
 ## 16. Settings
 
 | Doctype | Type | Purpose |
