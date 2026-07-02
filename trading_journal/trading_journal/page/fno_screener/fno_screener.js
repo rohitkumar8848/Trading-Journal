@@ -119,7 +119,7 @@ class FnOScreenerPage {
 					<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-fno-snap-info" style="color:rgba(255,255,255,0.85); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-fno-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-fno-run-all" style="background:#10b981;color:#fff;">Run All 7 Scans</button>
+						<button class="btn-scan" id="tj-fno-run-all" style="background:#10b981;color:#fff;">Run All 9 Scans</button>
 						<button class="btn-scan" id="tj-fno-run">Run This Scan</button>
 					</div>
 				</div>
@@ -281,7 +281,7 @@ class FnOScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Error", message: m.error || "Failed", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 7 Scans");
+					$btnAll.prop("disabled", false).text("Run All 9 Scans");
 					return;
 				}
 				const my = (m.run_names || {})["FnO Momentum"];
@@ -289,7 +289,7 @@ class FnOScreenerPage {
 				frappe.show_alert({message: "Started all 7 scans.", indicator: "green"}, 5);
 				this._poll_status();
 			},
-			error: () => $btnAll.prop("disabled", false).text("Run All 7 Scans"),
+			error: () => $btnAll.prop("disabled", false).text("Run All 9 Scans"),
 		});
 	}
 
@@ -307,7 +307,7 @@ class FnOScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-fno-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-fno-run-all").prop("disabled", false).text("Run All 7 Scans");
+						$b.find("#tj-fno-run-all").prop("disabled", false).text("Run All 9 Scans");
 					}
 				},
 			});

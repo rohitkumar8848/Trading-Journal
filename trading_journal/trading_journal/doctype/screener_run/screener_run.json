@@ -25,7 +25,7 @@
    "fieldname": "scan_type",
    "fieldtype": "Select",
    "label": "Scan Type",
-   "options": "Trend Template\nVCP\nTurnaround\nRocket Base\nIntraday Momentum\nFnO Momentum\nIntraday Short",
+   "options": "Trend Template\nVCP\nTurnaround\nRocket Base\nIntraday Momentum\nFnO Momentum\nIntraday Short\nIPO Base\nVCP All NSE\n52W Breakout",
    "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1

@@ -16,6 +16,7 @@ class TurnaroundScreenerPage {
 		this.search = "";
 		this.sector = "";
 		this.only_golden = false;
+		this.universe = "Nifty 500";
 		this._inject_styles();
 		this._render_skeleton();
 		this._bind_controls();
@@ -132,13 +133,21 @@ class TurnaroundScreenerPage {
 					<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-ta-snap-info" style="color:rgba(255,255,255,0.9); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-ta-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-ta-run-all" style="background:#065f46;color:#fff;">Run All 7 Scans</button>
+						<button class="btn-scan" id="tj-ta-run-all" style="background:#065f46;color:#fff;">Run All 9 Scans</button>
 						<button class="btn-scan" id="tj-ta-run">Run This Scan</button>
 					</div>
 				</div>
 				<div class="tj-ta-status" id="tj-ta-status" style="display: none;"></div>
 				<div class="tj-ta-summary" id="tj-ta-summary"></div>
 				<div class="tj-ta-filters">
+					<div>
+						<label>Universe</label>
+						<select id="tj-ta-universe">
+							<option value="Nifty 500" selected>Nifty 500</option>
+							<option value="FnO">F&amp;O</option>
+							<option value="All NSE">All NSE</option>
+						</select>
+					</div>
 					<div>
 						<label>Min 3-Month Return</label>
 						<select id="tj-ta-min-ret">
@@ -193,6 +202,9 @@ class TurnaroundScreenerPage {
 		$body.find("#tj-ta-run").on("click", () => this._start_scan());
 		$body.find("#tj-ta-run-all").on("click", () => this._start_all_scans());
 		$body.find("#tj-ta-snap-refresh").on("click", () => this._refresh_snapshot());
+		$body.find("#tj-ta-universe").on("change", (e) => {
+			this.universe = e.target.value || "Nifty 500";
+		});
 		$body.find("#tj-ta-min-ret").on("change", (e) => {
 			this.min_ret = e.target.value === "" ? "" : parseFloat(e.target.value);
 			this._render_results();
@@ -263,7 +275,7 @@ class TurnaroundScreenerPage {
 		$body.find("#tj-ta-run").prop("disabled", true).text("Queued…");
 		frappe.call({
 			method: "trading_journal.trading_journal.utils.screener.start_scan",
-			args: { scan_type: "Turnaround" },
+			args: { scan_type: "Turnaround", universe: this.universe },
 			callback: (r) => {
 				const m = r.message || {};
 				if (!m.ok) {
@@ -290,7 +302,7 @@ class TurnaroundScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Could not start scans", message: m.error || "Unknown error", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 7 Scans");
+					$btnAll.prop("disabled", false).text("Run All 9 Scans");
 					return;
 				}
 				const myRun = (m.run_names || {})["Turnaround"];
@@ -302,7 +314,7 @@ class TurnaroundScreenerPage {
 				this._poll_status();
 			},
 			error: () => {
-				$btnAll.prop("disabled", false).text("Run All 7 Scans");
+				$btnAll.prop("disabled", false).text("Run All 9 Scans");
 			},
 		});
 	}
@@ -321,7 +333,7 @@ class TurnaroundScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-ta-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-ta-run-all").prop("disabled", false).text("Run All 7 Scans");
+						$b.find("#tj-ta-run-all").prop("disabled", false).text("Run All 9 Scans");
 					}
 				},
 			});

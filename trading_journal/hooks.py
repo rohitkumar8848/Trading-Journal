@@ -11,6 +11,8 @@ user_data_fields = []
 # ------------
 after_install = "trading_journal.trading_journal.install.after_install"
 
+on_session_creation = "trading_journal.trading_journal.utils.session_hooks.on_session_creation"
+
 # Bench commands
 # ---------------
 commands = ["trading_journal.trading_journal.commands.sync_scrips.commands"]

@@ -39,12 +39,14 @@
   "range_22d_pct",
   "range_22d_high",
   "range_22d_low",
-  "vol_ratio_10_20"
+  "vol_ratio_10_20",
+  "is_nifty500"
  ],
  "fields": [
   {"fieldname": "symbol", "fieldtype": "Data", "label": "Symbol", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1, "search_index": 1, "columns": 2},
   {"fieldname": "date", "fieldtype": "Date", "label": "Date", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1, "search_index": 1, "columns": 1},
   {"fieldname": "industry", "fieldtype": "Data", "label": "Industry", "in_standard_filter": 1, "columns": 2},
+  {"fieldname": "is_nifty500", "fieldtype": "Check", "label": "In Nifty 500", "default": "0", "in_standard_filter": 1},
   {"fieldname": "col_break_1", "fieldtype": "Column Break"},
   {"fieldname": "open_price", "fieldtype": "Float", "label": "Open", "precision": "2"},
   {"fieldname": "high_price", "fieldtype": "Float", "label": "High", "precision": "2"},

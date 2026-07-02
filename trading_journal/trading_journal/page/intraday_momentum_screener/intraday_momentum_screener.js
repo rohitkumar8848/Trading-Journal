@@ -16,6 +16,7 @@ class IntradayMomentumScreenerPage {
 		this.min_vol = "";
 		this.search = "";
 		this.sector = "";
+		this.universe = "Nifty 500";
 		this._inject_styles();
 		this._render_skeleton();
 		this._bind_controls();
@@ -120,13 +121,21 @@ class IntradayMomentumScreenerPage {
 					<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-im-snap-info" style="color:rgba(255,255,255,0.85); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-im-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-im-run-all" style="background:#10b981;color:#fff;">Run All 7 Scans</button>
+						<button class="btn-scan" id="tj-im-run-all" style="background:#10b981;color:#fff;">Run All 9 Scans</button>
 						<button class="btn-scan" id="tj-im-run">Run This Scan</button>
 					</div>
 				</div>
 				<div class="tj-im-status" id="tj-im-status" style="display: none;"></div>
 				<div class="tj-im-summary" id="tj-im-summary"></div>
 				<div class="tj-im-filters">
+					<div>
+						<label>Universe</label>
+						<select id="tj-im-universe">
+							<option value="Nifty 500" selected>Nifty 500</option>
+							<option value="FnO">F&amp;O</option>
+							<option value="All NSE">All NSE</option>
+						</select>
+					</div>
 					<div>
 						<label>Min % Change</label>
 						<select id="tj-im-min-change">
@@ -188,6 +197,9 @@ class IntradayMomentumScreenerPage {
 		$b.find("#tj-im-run").on("click", () => this._start_scan());
 		$b.find("#tj-im-run-all").on("click", () => this._start_all_scans());
 		$b.find("#tj-im-snap-refresh").on("click", () => this._refresh_snapshot());
+		$b.find("#tj-im-universe").on("change", (e) => {
+			this.universe = e.target.value || "Nifty 500";
+		});
 		$b.find("#tj-im-min-change").on("change", (e) => {
 			this.min_change = e.target.value === "" ? "" : parseFloat(e.target.value);
 			this._render_results();
@@ -258,7 +270,7 @@ class IntradayMomentumScreenerPage {
 		$body.find("#tj-im-run").prop("disabled", true).text("Queued…");
 		frappe.call({
 			method: "trading_journal.trading_journal.utils.screener.start_scan",
-			args: { scan_type: "Intraday Momentum" },
+			args: { scan_type: "Intraday Momentum", universe: this.universe },
 			callback: (r) => {
 				const m = r.message || {};
 				if (!m.ok) {
@@ -283,7 +295,7 @@ class IntradayMomentumScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Error", message: m.error || "Failed", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 7 Scans");
+					$btnAll.prop("disabled", false).text("Run All 9 Scans");
 					return;
 				}
 				const my = (m.run_names || {})["Intraday Momentum"];
@@ -291,7 +303,7 @@ class IntradayMomentumScreenerPage {
 				frappe.show_alert({message: "Started all 7 scans.", indicator: "green"}, 5);
 				this._poll_status();
 			},
-			error: () => $btnAll.prop("disabled", false).text("Run All 7 Scans"),
+			error: () => $btnAll.prop("disabled", false).text("Run All 9 Scans"),
 		});
 	}
 
@@ -309,7 +321,7 @@ class IntradayMomentumScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-im-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-im-run-all").prop("disabled", false).text("Run All 7 Scans");
+						$b.find("#tj-im-run-all").prop("disabled", false).text("Run All 9 Scans");
 					}
 				},
 			});

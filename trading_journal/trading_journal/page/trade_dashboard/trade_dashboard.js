@@ -25,6 +25,8 @@ class TradeDashboard {
 		this._render_skeleton();
 		this._setup_filters();
 		this.refresh();
+		this._load_market_pulse();
+		this._load_screener_widgets();
 	}
 
 	_setup_filters() {
@@ -92,6 +94,10 @@ class TradeDashboard {
 	_render_skeleton() {
 		this.page.main.html(`
 			<div class="tj-dashboard" style="padding:16px">
+				<div class="tj-market-pulse" style="margin-bottom:16px"></div>
+				<div class="tj-quick-links" style="margin-bottom:16px"></div>
+				<div class="tj-screener-row" style="margin-bottom:20px"></div>
+				<div class="tj-hero-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px"></div>
 				<div class="tj-filter-bar"></div>
 				<div class="tj-brokers" style="margin-bottom:20px"></div>
 				<div class="tj-summary-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px"></div>
@@ -269,6 +275,23 @@ class TradeDashboard {
 				background: linear-gradient(180deg, var(--tj-primary), var(--tj-primary-2));
 			}
 
+			/* ─── Hero cards ─── */
+			.tj-hero-card {
+				border-radius:16px; padding:24px 28px; color:#fff;
+				box-shadow:0 8px 32px rgba(0,0,0,.28);
+				position:relative; overflow:hidden;
+				transition:transform .2s, box-shadow .2s;
+			}
+			.tj-hero-card::after {
+				content:""; position:absolute; inset:0;
+				background:radial-gradient(600px 200px at 110% -30%, rgba(255,255,255,.12), transparent 60%);
+				pointer-events:none;
+			}
+			.tj-hero-card:hover { transform:translateY(-3px); box-shadow:0 14px 40px rgba(0,0,0,.36); }
+			.tj-hero-lbl { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.8px; opacity:.7; margin-bottom:8px; }
+			.tj-hero-val { font-size:38px; font-weight:900; letter-spacing:-1px; line-height:1.05; color:#fff; }
+			.tj-hero-sub { font-size:12px; opacity:.65; margin-top:10px; font-weight:500; }
+
 			/* ─── Summary stat cards ─── */
 			.tj-summary-card {
 				position:relative; background:var(--tj-card);
@@ -422,6 +445,65 @@ class TradeDashboard {
 			.tj-mistake-count { font-size:11px; color:var(--tj-muted); }
 			.tj-mistake-pnl { font-weight:800; text-align:right; }
 
+			/* ─── Quick links bar ─── */
+			.tj-quick-links-bar {
+				display:flex; gap:8px; flex-wrap:wrap;
+			}
+			.tj-ql-btn {
+				display:inline-flex; align-items:center; gap:6px;
+				padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700;
+				text-decoration:none; border:1px solid var(--tj-border);
+				background:var(--tj-card); color:var(--tj-text);
+				box-shadow:var(--tj-shadow-sm);
+				transition:transform .15s, box-shadow .15s, border-color .15s;
+			}
+			.tj-ql-btn:hover { transform:translateY(-1px); box-shadow:var(--tj-shadow-md); border-color:#c7d0e8; text-decoration:none; color:var(--tj-text); }
+			.tj-ql-btn .tj-ql-dot { width:8px; height:8px; border-radius:50%; }
+
+			/* ─── Screener mini-widgets ─── */
+			.tj-screener-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+			@media(max-width:800px){ .tj-screener-row { grid-template-columns:1fr; } }
+			.tj-widget-card {
+				background:var(--tj-card); border:1px solid var(--tj-border);
+				border-radius:14px; overflow:hidden; box-shadow:var(--tj-shadow-sm);
+			}
+			.tj-widget-header {
+				display:flex; align-items:center; justify-content:space-between;
+				padding:12px 16px; border-bottom:1px solid var(--tj-border);
+			}
+			.tj-widget-title {
+				font-size:11px; font-weight:800; text-transform:uppercase;
+				letter-spacing:.6px; color:var(--tj-muted);
+				display:flex; align-items:center; gap:6px;
+			}
+			.tj-widget-title-dot { width:8px; height:8px; border-radius:50%; }
+			.tj-widget-link {
+				font-size:11px; font-weight:700; text-decoration:none;
+				padding:4px 10px; border-radius:6px; border:1px solid var(--tj-border);
+				color:var(--tj-primary);
+				transition:background .15s;
+			}
+			.tj-widget-link:hover { background:#eef2ff; text-decoration:none; }
+			.tj-mini-table { width:100%; border-collapse:collapse; font-size:12px; }
+			.tj-mini-table th {
+				text-align:left; padding:6px 14px; background:#f8f9fd;
+				color:var(--tj-muted); font-size:10px; font-weight:700;
+				text-transform:uppercase; letter-spacing:.4px;
+				border-bottom:1px solid var(--tj-border);
+			}
+			.tj-mini-table td { padding:7px 14px; border-bottom:1px solid #f0f1f7; }
+			.tj-mini-table tr:last-child td { border:none; }
+			.tj-mini-table tr:hover td { background:#f8f9fd; }
+			.tj-mini-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; }
+			.tj-rs-chip90 { background:#4c1d95; color:#e9d5ff; }
+			.tj-rs-chip80 { background:#1e3a5f; color:#93c5fd; }
+			.tj-rs-chip70 { background:#064e3b; color:#6ee7b7; }
+			.tj-rs-delta-up   { color:#10b981; font-weight:700; }
+			.tj-rs-delta-down { color:#f43f5e; font-weight:700; }
+			.tj-vol-chip-hot  { background:#7c2d12; color:#fb923c; }
+			.tj-vol-chip-warm { background:#422006; color:#fcd34d; }
+			.tj-widget-loading { padding:20px; text-align:center; color:var(--tj-muted); font-size:12px; }
+
 			/* ─── Calendar heatmap ─── */
 			.tj-cal-wrap { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:20px; }
 			.tj-cal-month-title { font-size:12px; font-weight:700; color:var(--tj-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
@@ -435,6 +517,275 @@ class TradeDashboard {
 			.tj-cal-legend { display:flex; align-items:center; gap:4px; margin-top:14px; font-size:10px; color:var(--tj-muted); justify-content:flex-end; }
 			.tj-cal-legend .tj-cal-cell { width:12px; height:12px; aspect-ratio:initial; }
 		</style>`);
+	}
+
+	_render_quick_links() {
+		const links = [
+			{ href: "/app/daily-prep",       label: "Daily Prep",       dot: "#f59e0b" },
+			{ href: "/app/trade-analytics",   label: "Trade Analytics",  dot: "#6366f1" },
+			{ href: "/app/rs-leaders",        label: "RS Leaders",       dot: "#8b5cf6" },
+			{ href: "/app/volume-screener",   label: "Volume Surge",     dot: "#f97316" },
+			{ href: "/app/position-sizer",    label: "Position Sizer",   dot: "#10b981" },
+			{ href: "/app/breakout-screener", label: "52W Breakout",     dot: "#0ea5e9" },
+			{ href: "/app/sector-heatmap",    label: "Sector Rotation",  dot: "#ec4899" },
+		];
+		const html = `<div class="tj-quick-links-bar">` +
+			links.map(l =>
+				`<a class="tj-ql-btn" href="${l.href}">
+					<span class="tj-ql-dot" style="background:${l.dot}"></span>${l.label}
+				</a>`
+			).join("") +
+			`</div>`;
+		this.page.main.find(".tj-quick-links").html(html);
+	}
+
+	_load_screener_widgets() {
+		this._render_quick_links();
+		this.page.main.find(".tj-screener-row").html(`
+			<div class="tj-widget-card">
+				<div class="tj-widget-header">
+					<div class="tj-widget-title">
+						<span class="tj-widget-title-dot" style="background:#8b5cf6"></span>RS Leaders
+					</div>
+					<a class="tj-widget-link" href="/app/rs-leaders">View All →</a>
+				</div>
+				<div class="tj-rs-widget-body"><div class="tj-widget-loading">Loading…</div></div>
+			</div>
+			<div class="tj-widget-card">
+				<div class="tj-widget-header">
+					<div class="tj-widget-title">
+						<span class="tj-widget-title-dot" style="background:#f97316"></span>Volume Surge
+					</div>
+					<a class="tj-widget-link" href="/app/volume-screener">View All →</a>
+				</div>
+				<div class="tj-vol-widget-body"><div class="tj-widget-loading">Loading…</div></div>
+			</div>
+		`);
+
+		frappe.call({
+			method: "trading_journal.trading_journal.utils.screener.get_rs_leaders",
+			args: { min_rs: 75, max_pct_from_high: -15, nifty500_only: 1 },
+			callback: r => {
+				if (r.message && r.message.ok) this._render_rs_widget(r.message);
+				else this.page.main.find(".tj-rs-widget-body").html(`<div class="tj-widget-loading">No data</div>`);
+			},
+		});
+
+		frappe.call({
+			method: "trading_journal.trading_journal.utils.screener.get_volume_surge",
+			args: { min_vol_ratio: 2.0, min_rs: 50, nifty500_only: 1 },
+			callback: r => {
+				if (r.message && r.message.ok) this._render_vol_widget(r.message);
+				else this.page.main.find(".tj-vol-widget-body").html(`<div class="tj-widget-loading">No data</div>`);
+			},
+		});
+	}
+
+	_render_rs_widget(d) {
+		const top = (d.results || []).slice(0, 10);
+		if (!top.length) {
+			this.page.main.find(".tj-rs-widget-body").html(`<div class="tj-widget-loading">No stocks found</div>`);
+			return;
+		}
+		const rs_chip = rs => {
+			if (rs >= 90) return `<span class="tj-mini-badge tj-rs-chip90">RS ${rs}</span>`;
+			if (rs >= 80) return `<span class="tj-mini-badge tj-rs-chip80">RS ${rs}</span>`;
+			return               `<span class="tj-mini-badge tj-rs-chip70">RS ${rs}</span>`;
+		};
+		const delta_html = d => {
+			if (!d && d !== 0) return `<span style="color:#94a3b8">—</span>`;
+			const cls = d > 0 ? "tj-rs-delta-up" : d < 0 ? "tj-rs-delta-down" : "";
+			return `<span class="${cls}">${d > 0 ? "▲" : d < 0 ? "▼" : ""}${Math.abs(d).toFixed(1)}</span>`;
+		};
+		const rows = top.map((r, i) => `
+			<tr>
+				<td style="color:#94a3b8;width:28px">${i + 1}</td>
+				<td>
+					<a href="https://www.tradingview.com/chart/?symbol=NSE:${r.symbol}" target="_blank" class="tj-chart-hover"
+					   data-symbol="${r.symbol}" data-exchange="NSE"
+					   style="font-weight:700;color:#6366f1;text-decoration:none">${r.symbol}</a>
+				</td>
+				<td>${rs_chip(r.rs_rating)}</td>
+				<td>${delta_html(r.rs_delta)}</td>
+				<td style="color:${r.pct_from_52w_high >= -5 ? "#10b981" : "#f59e0b"};font-size:11px">
+					${r.pct_from_52w_high.toFixed(1)}%
+				</td>
+			</tr>`).join("");
+		this.page.main.find(".tj-rs-widget-body").html(`
+			<table class="tj-mini-table">
+				<thead><tr><th>#</th><th>Symbol</th><th>RS</th><th>Δ 5d</th><th>vs High</th></tr></thead>
+				<tbody>${rows}</tbody>
+			</table>
+			<div style="padding:8px 14px;font-size:10px;color:#94a3b8;border-top:1px solid #f0f1f7;">
+				${d.total} stocks with RS ≥ 75 · Nifty 500 · ${d.date}
+			</div>
+		`);
+	}
+
+	_render_vol_widget(d) {
+		const top = (d.results || []).slice(0, 10);
+		if (!top.length) {
+			this.page.main.find(".tj-vol-widget-body").html(`<div class="tj-widget-loading">No surge today</div>`);
+			return;
+		}
+		const vol_chip = v => {
+			if (v >= 4) return `<span class="tj-mini-badge tj-vol-chip-hot">${v}x</span>`;
+			return          `<span class="tj-mini-badge tj-vol-chip-warm">${v}x</span>`;
+		};
+		const rows = top.map((r, i) => `
+			<tr>
+				<td style="color:#94a3b8;width:28px">${i + 1}</td>
+				<td>
+					<a href="https://www.tradingview.com/chart/?symbol=NSE:${r.symbol}" target="_blank" class="tj-chart-hover"
+					   data-symbol="${r.symbol}" data-exchange="NSE"
+					   style="font-weight:700;color:#f97316;text-decoration:none">${r.symbol}</a>
+					${r.near_52w_high ? `<span style="font-size:9px;color:#10b981;margin-left:4px">▲High</span>` : ""}
+				</td>
+				<td>${vol_chip(r.vol_ratio)}</td>
+				<td style="color:${r.rs_rating >= 70 ? "#8b5cf6" : "#94a3b8"};font-weight:700">${r.rs_rating}</td>
+				<td style="color:${r.pct_from_52w_high >= -5 ? "#10b981" : "#f59e0b"};font-size:11px">
+					${r.pct_from_52w_high.toFixed(1)}%
+				</td>
+			</tr>`).join("");
+		this.page.main.find(".tj-vol-widget-body").html(`
+			<table class="tj-mini-table">
+				<thead><tr><th>#</th><th>Symbol</th><th>Vol Ratio</th><th>RS</th><th>vs High</th></tr></thead>
+				<tbody>${rows}</tbody>
+			</table>
+			<div style="padding:8px 14px;font-size:10px;color:#94a3b8;border-top:1px solid #f0f1f7;">
+				${d.total} stocks with Vol ≥ 2x · Nifty 500 · ${d.date}
+			</div>
+		`);
+	}
+
+	_load_market_pulse() {
+		frappe.call({
+			method: "trading_journal.trading_journal.utils.screener.get_market_breadth",
+			callback: (r) => {
+				if (r.message && r.message.ok) {
+					this._render_market_pulse(r.message);
+				}
+			},
+		});
+	}
+
+	_render_market_pulse(d) {
+		const pct = (v) => (v || 0).toFixed(1);
+		const adColor = d.ad_ratio >= 1.5 ? "#10b981" : (d.ad_ratio < 0.7 ? "#ef4444" : "#f59e0b");
+
+		const breadthBar = (pct50, pct150, pct200) => {
+			return `
+				<div style="margin-top:10px;">
+					<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px;color:#64748b;font-weight:700;">
+						<span>SMA Breadth</span>
+						<span>0% ─────────────── 100%</span>
+					</div>
+					${[
+						{ label: "SMA 50", val: pct50, color: "#6366f1" },
+						{ label: "SMA 150", val: pct150, color: "#8b5cf6" },
+						{ label: "SMA 200", val: pct200, color: "#a78bfa" },
+					].map(b => `
+						<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+							<span style="font-size:10px;color:#94a3b8;font-weight:700;width:52px;">${b.label}</span>
+							<div style="flex:1;height:7px;background:#f1f5f9;border-radius:999px;overflow:hidden;">
+								<div style="width:${b.val}%;height:100%;background:${b.color};border-radius:999px;transition:width .6s;"></div>
+							</div>
+							<span style="font-size:11px;font-weight:800;color:${b.color};width:36px;text-align:right;">${b.val}%</span>
+						</div>
+					`).join("")}
+				</div>
+			`;
+		};
+
+		const cards = [
+			{
+				icon: "📊",
+				label: "Market Breadth",
+				value: `${pct(d.above_sma50_pct)}%`,
+				sub: "above SMA 50",
+				color: d.above_sma50_pct >= 60 ? "#10b981" : (d.above_sma50_pct < 40 ? "#ef4444" : "#f59e0b"),
+				extra: breadthBar(d.above_sma50_pct, d.above_sma150_pct, d.above_sma200_pct),
+				wide: true,
+			},
+			{
+				icon: "⚡",
+				label: "A/D Ratio",
+				value: d.ad_ratio.toFixed(2),
+				sub: `${d.advancing} up · ${d.declining} down`,
+				color: adColor,
+			},
+			{
+				icon: "🎯",
+				label: "RS Strong (≥70)",
+				value: d.rs_strong,
+				sub: `${pct(d.rs_strong / d.total * 100)}% of ${d.total}`,
+				color: "#6366f1",
+			},
+			{
+				icon: "🏔",
+				label: "Near 52W High",
+				value: d.near_52w_high,
+				sub: "within 5% of high",
+				color: "#0ea5e9",
+			},
+			{
+				icon: "🌀",
+				label: "VCP Setups",
+				value: d.vcp_setups,
+				sub: "today's scan",
+				color: "#8b5cf6",
+			},
+			{
+				icon: "📈",
+				label: "Avg RS Rating",
+				value: (d.avg_rs || 0).toFixed(1),
+				sub: "Nifty 500 average",
+				color: d.avg_rs >= 50 ? "#10b981" : "#ef4444",
+			},
+		];
+
+		const html = `
+			<div style="
+				background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+				border-radius: 14px; padding: 18px 22px; position: relative; overflow: hidden;
+			">
+				<div style="
+					position:absolute;inset:0;
+					background:radial-gradient(800px 200px at 80% -10%, rgba(139,92,246,.2), transparent 55%);
+					pointer-events:none;
+				"></div>
+				<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;position:relative;">
+					<div>
+						<div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.6);">Market Pulse</div>
+						<div style="font-size:13px;font-weight:700;color:rgba(255,255,255,.9);margin-top:2px;">
+							Nifty 500 · ${d.date || ""}
+						</div>
+					</div>
+					<a href="/app/sector-heatmap" style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);text-decoration:none;
+						background:rgba(255,255,255,.1);padding:6px 12px;border-radius:6px;border:1px solid rgba(255,255,255,.2);">
+						Sector Rotation →
+					</a>
+				</div>
+				<div style="display:grid;grid-template-columns:${cards[0].wide ? "1.6fr" : "1fr"} repeat(${cards.length - 1}, 1fr);gap:10px;position:relative;">
+					${cards.map((c, i) => `
+						<div style="
+							background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);
+							border-radius:12px;padding:14px 16px;
+							${i === 0 ? "" : ""}
+						">
+							<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+								<span style="font-size:16px;">${c.icon}</span>
+								<span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:rgba(255,255,255,.55);">${c.label}</span>
+							</div>
+							<div style="font-size:26px;font-weight:900;color:${c.color};letter-spacing:-.5px;line-height:1.1;">${c.value}</div>
+							<div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;font-weight:600;">${c.sub}</div>
+							${c.extra || ""}
+						</div>
+					`).join("")}
+				</div>
+			</div>
+		`;
+		this.page.main.find(".tj-market-pulse").html(html);
 	}
 
 	refresh() {
@@ -567,7 +918,62 @@ class TradeDashboard {
 		`);
 	}
 
+	_render_hero(s) {
+		const net = s.net_pnl || 0;
+		const netPositive = net >= 0;
+		const netColor = netPositive ? "#10b981" : "#f43f5e";
+		const netBg = netPositive
+			? "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)"
+			: "linear-gradient(135deg, #4c0519 0%, #881337 50%, #9f1239 100%)";
+		const netLabel = netPositive ? "You're up" : "You're down";
+
+		const wr = s.win_rate || 0;
+		const wrGood = wr >= 50;
+		const wrBg = wrGood
+			? "linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)"
+			: "linear-gradient(135deg, #3b1a4a 0%, #6d28d9 100%)";
+		const wrBar = `
+			<div style="margin-top:12px; background:rgba(255,255,255,0.15); border-radius:999px; height:6px; overflow:hidden;">
+				<div style="width:${wr}%; height:100%; background:#fff; border-radius:999px; transition:width .4s;"></div>
+			</div>
+			<div style="display:flex; justify-content:space-between; font-size:11px; opacity:.75; margin-top:5px;">
+				<span>${s.wins}W</span><span>${s.losses}L</span>
+			</div>`;
+
+		const streak = s.current_streak || 0;
+		const streakType = s.current_streak_type;
+		const streakWin = streakType === "W";
+		const streakBg = streakWin
+			? "linear-gradient(135deg, #451a03 0%, #92400e 50%, #b45309 100%)"
+			: (streakType === "L"
+				? "linear-gradient(135deg, #1c1917 0%, #44403c 100%)"
+				: "linear-gradient(135deg, #0f172a 0%, #334155 100%)");
+		const streakIcon = streakWin ? "🔥" : (streakType === "L" ? "❄" : "—");
+		const streakSub = streakWin
+			? (streak >= 5 ? "You're on fire!" : streak >= 3 ? "Keep it going!" : "Building momentum")
+			: (streakType === "L" ? (streak >= 3 ? "Regroup & refocus" : "Stay disciplined") : "No active streak");
+
+		this.page.main.find(".tj-hero-cards").html(`
+			<div class="tj-hero-card" style="background:${netBg};">
+				<div class="tj-hero-lbl">${netLabel}</div>
+				<div class="tj-hero-val" style="color:${netPositive ? "#6ee7b7" : "#fda4af"};">${format_currency(net)}</div>
+				<div class="tj-hero-sub">Net P&amp;L after charges · ${s.total_trades} trade${s.total_trades === 1 ? "" : "s"}</div>
+			</div>
+			<div class="tj-hero-card" style="background:${wrBg};">
+				<div class="tj-hero-lbl">Win Rate</div>
+				<div class="tj-hero-val">${wr.toFixed(1)}%</div>
+				${wrBar}
+			</div>
+			<div class="tj-hero-card" style="background:${streakBg};">
+				<div class="tj-hero-lbl">Current Streak</div>
+				<div class="tj-hero-val">${streakIcon} ${streak > 0 ? streak + (streakWin ? "W" : "L") : "—"}</div>
+				<div class="tj-hero-sub">${streakSub}</div>
+			</div>
+		`);
+	}
+
 	_render_summary(s) {
+		this._render_hero(s);
 		const streakLabel = s.current_streak_type === "W"
 			? `🔥 ${s.current_streak}W`
 			: (s.current_streak_type === "L" ? `❄ ${s.current_streak}L` : "-");

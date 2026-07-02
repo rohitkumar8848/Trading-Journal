@@ -1,8 +1,8 @@
 {
  "app": "trading_journal",
  "charts": [],
- "content": "[{\"id\":\"hdr_s1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"sc_dash\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Dashboard\",\"col\":4}},{\"id\":\"sc_kanban\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Kanban\",\"col\":4}},{\"id\":\"sc_charts\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Charts\",\"col\":4}},{\"id\":\"sc_review\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Review\",\"col\":4}},{\"id\":\"sc_trade\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade\",\"col\":4}},{\"id\":\"sc_holdings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Portfolio Holdings\",\"col\":4}},{\"id\":\"sc_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Import\",\"col\":4}},{\"id\":\"sc_broker\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Broker\",\"col\":4}},{\"id\":\"sc_sector_heatmap\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sector Heatmap\",\"col\":4}},{\"id\":\"sc_earnings_calendar\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Earnings Calendar\",\"col\":4}},{\"id\":\"sc_screener_backtest\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Screener Backtest\",\"col\":4}},{\"id\":\"spc_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_s2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Modules</b></span>\",\"col\":12}},{\"id\":\"card_trading\",\"type\":\"card\",\"data\":{\"card_name\":\"Trading\",\"col\":4}},{\"id\":\"card_screeners\",\"type\":\"card\",\"data\":{\"card_name\":\"Screeners\",\"col\":4}},{\"id\":\"card_portfolio\",\"type\":\"card\",\"data\":{\"card_name\":\"Portfolio\",\"col\":4}},{\"id\":\"card_tools\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}},{\"id\":\"card_analytics\",\"type\":\"card\",\"data\":{\"card_name\":\"Analytics\",\"col\":4}},{\"id\":\"spc_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"card_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"card_review\",\"type\":\"card\",\"data\":{\"card_name\":\"Review & Journal\",\"col\":4}}]",
- "creation": "2026-04-21 00:00:00",
+ "content": "[{\"id\":\"hdr_stats\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Performance</b></span>\",\"col\":12}},{\"id\":\"nc_pnl\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total P&L\",\"col\":4}},{\"id\":\"nc_trades\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Trades\",\"col\":4}},{\"id\":\"nc_wins\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Total Wins\",\"col\":4}},{\"id\":\"spc_stats\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_s1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"sc_dash\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Dashboard\",\"col\":3}},{\"id\":\"sc_dailyprep\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Prep\",\"col\":3}},{\"id\":\"sc_kanban\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Kanban\",\"col\":3}},{\"id\":\"sc_watchlist\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Watchlist\",\"col\":3}},{\"id\":\"sc_holdings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Portfolio Holdings\",\"col\":3}},{\"id\":\"sc_sizer\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Position Sizer\",\"col\":3}},{\"id\":\"sc_charts\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Charts\",\"col\":3}},{\"id\":\"sc_review\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Review\",\"col\":3}},{\"id\":\"sc_import\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Trade Import\",\"col\":3}},{\"id\":\"sc_heatmap\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Sector Heatmap\",\"col\":3}},{\"id\":\"sc_earnings\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Earnings Calendar\",\"col\":3}},{\"id\":\"sc_broker\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Broker\",\"col\":3}},{\"id\":\"spc_1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_screeners\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Screeners</b></span>\",\"col\":12}},{\"id\":\"sc_momentum\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Momentum Screener\",\"col\":3}},{\"id\":\"sc_vcp\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"VCP Screener\",\"col\":3}},{\"id\":\"sc_rocket\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Rocket Base Screener\",\"col\":3}},{\"id\":\"sc_ipo\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"IPO Base Screener\",\"col\":3}},{\"id\":\"sc_rs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"RS Leaders\",\"col\":3}},{\"id\":\"sc_fno\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"FnO Screener\",\"col\":3}},{\"id\":\"sc_volume\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Volume Surge Scanner\",\"col\":3}},{\"id\":\"sc_intraday\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Intraday Screener\",\"col\":3}},{\"id\":\"sc_intraday_short\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Intraday Short Screener\",\"col\":3}},{\"id\":\"sc_turnaround\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Turnaround Screener\",\"col\":3}},{\"id\":\"sc_backtest\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Screener Backtest\",\"col\":3}},{\"id\":\"sc_option_chain\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Option Chain Analyzer\",\"col\":3}},{\"id\":\"spc_2\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hdr_s2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Modules</b></span>\",\"col\":12}},{\"id\":\"card_trading\",\"type\":\"card\",\"data\":{\"card_name\":\"Trading\",\"col\":4}},{\"id\":\"card_screeners\",\"type\":\"card\",\"data\":{\"card_name\":\"Screeners\",\"col\":4}},{\"id\":\"card_portfolio\",\"type\":\"card\",\"data\":{\"card_name\":\"Portfolio\",\"col\":4}},{\"id\":\"card_tools\",\"type\":\"card\",\"data\":{\"card_name\":\"Tools\",\"col\":4}},{\"id\":\"card_analytics\",\"type\":\"card\",\"data\":{\"card_name\":\"Analytics\",\"col\":4}},{\"id\":\"card_masters\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"card_review\",\"type\":\"card\",\"data\":{\"card_name\":\"Review & Journal\",\"col\":4}}]",
+ "creation": "2026-07-01 01:22:10.682273",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -19,6 +19,7 @@
    "is_query_report": 0,
    "label": "Trading",
    "link_count": 3,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
@@ -63,6 +64,7 @@
    "is_query_report": 0,
    "label": "Portfolio",
    "link_count": 3,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
@@ -107,7 +109,7 @@
    "icon": "",
    "is_query_report": 0,
    "label": "Tools",
-   "link_count": 5,
+   "link_count": 7,
    "link_to": "",
    "link_type": "",
    "onboard": 0,
@@ -159,6 +161,39 @@
   },
   {
    "hidden": 0,
+   "icon": "morning",
+   "is_query_report": 0,
+   "label": "Daily Prep",
+   "link_count": 0,
+   "link_to": "daily-prep",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "scale",
+   "is_query_report": 0,
+   "label": "Position Sizer",
+   "link_count": 0,
+   "link_to": "position-sizer",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "icon": "list",
+   "is_query_report": 0,
+   "label": "Option Chain Analyzer",
+   "link_count": 0,
+   "link_to": "option-chain-analyzer",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
    "icon": "mail",
    "is_query_report": 0,
    "label": "Telegram Settings",
@@ -173,6 +208,7 @@
    "is_query_report": 0,
    "label": "Masters",
    "link_count": 3,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
@@ -217,6 +253,7 @@
    "is_query_report": 0,
    "label": "Review & Journal",
    "link_count": 2,
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
@@ -248,7 +285,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Analytics",
-   "link_count": 5,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -313,8 +350,18 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Trade Analytics",
+   "link_count": 0,
+   "link_to": "trade-analytics",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Screeners",
-   "link_count": 8,
+   "link_count": 12,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -390,6 +437,37 @@
    "type": "Link"
   },
   {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "IPO Base Screener",
+   "link_count": 0,
+   "link_to": "ipo-base-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "RS Leaders",
+   "link_count": 0,
+   "link_to": "rs-leaders",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Volume Surge Scanner",
+   "link_count": 0,
+   "link_to": "volume-screener",
+   "link_type": "Page",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
    "hidden": 0,
    "is_query_report": 0,
    "label": "Screener Run History",
@@ -400,11 +478,21 @@
    "type": "Link"
   }
  ],
- "modified": "2026-05-22 23:59:59.000000",
+ "modified": "2026-07-02 01:10:28.008036",
  "modified_by": "Administrator",
  "module": "Trading Journal",
  "name": "Trading Journal",
- "number_cards": [],
+ "number_cards": [
+  {
+   "number_card_name": "Total P&L"
+  },
+  {
+   "number_card_name": "Total Trades"
+  },
+  {
+   "number_card_name": "Total Wins"
+  }
+ ],
  "owner": "Administrator",
  "parent_page": "",
  "public": 1,
@@ -423,12 +511,52 @@
    "type": "Page"
   },
   {
+   "color": "Orange",
+   "doc_view": "",
+   "format": "",
+   "icon": "morning",
+   "label": "Daily Prep",
+   "link_to": "daily-prep",
+   "stats_filter": "",
+   "type": "Page"
+  },
+  {
    "color": "Purple",
    "doc_view": "",
    "format": "",
    "icon": "list",
    "label": "Trade Kanban",
    "link_to": "trade-kanban",
+   "stats_filter": "",
+   "type": "Page"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "format": "",
+   "icon": "star",
+   "label": "Watchlist",
+   "link_to": "watchlist",
+   "stats_filter": "",
+   "type": "Page"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "",
+   "format": "",
+   "icon": "briefcase",
+   "label": "Portfolio Holdings",
+   "link_to": "trade-holdings",
+   "stats_filter": "",
+   "type": "Page"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "format": "",
+   "icon": "scale",
+   "label": "Position Sizer",
+   "link_to": "position-sizer",
    "stats_filter": "",
    "type": "Page"
   },
@@ -453,16 +581,6 @@
    "type": "Page"
   },
   {
-   "color": "Yellow",
-   "doc_view": "",
-   "format": "",
-   "icon": "briefcase",
-   "label": "Portfolio Holdings",
-   "link_to": "trade-holdings",
-   "stats_filter": "",
-   "type": "Page"
-  },
-  {
    "color": "Orange",
    "doc_view": "",
    "format": "",
@@ -473,14 +591,20 @@
    "type": "Page"
   },
   {
-   "color": "Cyan",
-   "doc_view": "List",
-   "format": "",
-   "icon": "stock",
-   "label": "Trade",
-   "link_to": "Trade",
-   "stats_filter": "",
-   "type": "DocType"
+   "color": "Pink",
+   "doc_view": "",
+   "icon": "tree",
+   "label": "Sector Heatmap",
+   "link_to": "sector-heatmap",
+   "type": "Page"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "",
+   "icon": "calendar",
+   "label": "Earnings Calendar",
+   "link_to": "earnings-calendar",
+   "type": "Page"
   },
   {
    "color": "Pink",
@@ -493,24 +617,99 @@
    "type": "DocType"
   },
   {
-   "color": "Pink",
-   "icon": "tree",
-   "label": "Sector Heatmap",
-   "link_to": "sector-heatmap",
+   "color": "Purple",
+   "doc_view": "",
+   "icon": "filter",
+   "label": "Momentum Screener",
+   "link_to": "momentum-screener",
    "type": "Page"
   },
   {
-   "color": "Yellow",
-   "icon": "calendar",
-   "label": "Earnings Calendar",
-   "link_to": "earnings-calendar",
+   "color": "Blue",
+   "doc_view": "",
+   "icon": "graph",
+   "label": "VCP Screener",
+   "link_to": "vcp-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "icon": "stock",
+   "label": "Rocket Base Screener",
+   "link_to": "rocket-base-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Pink",
+   "doc_view": "",
+   "icon": "star",
+   "label": "IPO Base Screener",
+   "link_to": "ipo-base-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "icon": "performance",
+   "label": "RS Leaders",
+   "link_to": "rs-leaders",
    "type": "Page"
   },
   {
    "color": "Green",
+   "doc_view": "",
+   "icon": "filter",
+   "label": "FnO Screener",
+   "link_to": "fno-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "",
+   "icon": "graph",
+   "label": "Volume Surge Scanner",
+   "link_to": "volume-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "",
+   "icon": "filter",
+   "label": "Intraday Screener",
+   "link_to": "intraday-momentum-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "icon": "filter",
+   "label": "Intraday Short Screener",
+   "link_to": "intraday-short-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "icon": "recycle",
+   "label": "Turnaround Screener",
+   "link_to": "turnaround-screener",
+   "type": "Page"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
    "icon": "getting-started",
    "label": "Screener Backtest",
    "link_to": "screener-backtest",
+   "type": "Page"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "",
+   "icon": "list",
+   "label": "Option Chain Analyzer",
+   "link_to": "option-chain-analyzer",
    "type": "Page"
   }
  ],

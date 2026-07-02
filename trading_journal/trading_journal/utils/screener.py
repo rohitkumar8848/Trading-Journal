@@ -876,6 +876,121 @@ def _detect_fno_momentum_from_snapshot(row: dict, in_fno: bool) -> dict:
 	}
 
 
+def _all_candles_for_symbols(symbols: list, target_date) -> dict:
+	"""Pull all available candle history (up to ~300 days) per symbol from snapshots."""
+	from datetime import timedelta
+	cutoff = target_date - timedelta(days=500)
+	if not symbols:
+		return {}
+	out = {}
+	for i in range(0, len(symbols), 200):
+		batch = symbols[i:i + 200]
+		placeholders = ", ".join(["%s"] * len(batch))
+		rows = frappe.db.sql(
+			f"""
+			SELECT symbol, UNIX_TIMESTAMP(date) AS t,
+			       open_price AS o, high_price AS h, low_price AS l,
+			       close_price AS c, volume AS v
+			FROM `tabStock Daily Snapshot`
+			WHERE date >= %s AND date <= %s AND symbol IN ({placeholders})
+			ORDER BY symbol, date
+			""",
+			[cutoff.isoformat(), target_date.isoformat()] + batch,
+			as_dict=True,
+		)
+		for r in rows:
+			out.setdefault(r["symbol"], []).append({
+				"t": int(r["t"]),
+				"o": flt(r["o"]), "h": flt(r["h"]), "l": flt(r["l"]),
+				"c": flt(r["c"]), "v": int(r["v"] or 0),
+			})
+	return out
+
+
+def _detect_ipo_base(candles: list) -> dict:
+	"""Detect the IPO base pattern — a tight consolidation after the initial listing surge.
+
+	Criteria:
+	  1. Recent listing: 30–350 candles of history
+	  2. Clear IPO surge: price rose ≥ 20% from first close to the all-time-high since listing
+	     (ATH searched in first 120 candles so a much-later breakout isn't counted)
+	  3. Base has formed: at least 15 candles since the ATH
+	  4. Base depth (ATH → lowest close since ATH): 5–35%
+	  5. Near pivot: current price within 10% of the IPO ATH
+	"""
+	n = len(candles)
+	if n < 30:
+		return {"is_ipo_base": False, "reason": "too few candles (need ≥30)"}
+	if n > 350:
+		return {"is_ipo_base": False, "reason": "too much history — not a recent IPO"}
+
+	closes = [c["c"] for c in candles]
+	vols = [c["v"] for c in candles]
+
+	first_close = closes[0]
+	last_close = closes[-1]
+	if not first_close or not last_close:
+		return {"is_ipo_base": False, "reason": "invalid prices"}
+
+	# IPO ATH: highest close in the first 120 candles (leave ≥15 for the base)
+	search_window = min(120, n - 15)
+	ipo_high = max(closes[:search_window])
+	ipo_high_idx = closes[:search_window].index(ipo_high)
+
+	candles_since_high = n - 1 - ipo_high_idx
+	if candles_since_high < 15:
+		return {"is_ipo_base": False, "reason": "IPO high too recent — need 15+ candles for a base"}
+
+	ipo_surge = (ipo_high - first_close) / first_close * 100
+	if ipo_surge < 20:
+		return {"is_ipo_base": False, "reason": f"IPO surge only {ipo_surge:.1f}% (need ≥20%)"}
+
+	# Base: lowest close since the IPO ATH
+	post_high = closes[ipo_high_idx:]
+	base_low = min(post_high)
+	base_depth = (ipo_high - base_low) / ipo_high * 100
+
+	if base_depth > 35:
+		return {"is_ipo_base": False, "reason": f"base too deep: {base_depth:.1f}% (need ≤35%)"}
+	if base_depth < 5:
+		return {"is_ipo_base": False, "reason": f"base too shallow: {base_depth:.1f}% (need ≥5%)"}
+
+	# Current price must be near the IPO ATH (within 10%)
+	distance_from_high = (ipo_high - last_close) / ipo_high * 100
+	if distance_from_high > 10:
+		return {"is_ipo_base": False, "reason": f"{distance_from_high:.1f}% below IPO high (need ≤10%)"}
+
+	# Recent range tightness: last 15 candles
+	recent = closes[-15:] if n >= 15 else closes
+	recent_hi = max(recent)
+	recent_lo = min(recent)
+	recent_range = (recent_hi - recent_lo) / recent_lo * 100 if recent_lo else 100
+
+	# Volume dry-up during the base (recent 5 bars vs prior 15)
+	vol_dry_up = False
+	if n >= 20 and vols[-5:] and vols[-20:-5]:
+		recent_vol = sum(vols[-5:]) / 5
+		prior_vol = sum(vols[-20:-5]) / 15
+		vol_dry_up = prior_vol > 0 and recent_vol < prior_vol * 0.75
+
+	return {
+		"is_ipo_base": True,
+		"ipo_high": round(ipo_high, 2),
+		"ipo_surge_pct": round(ipo_surge, 2),
+		"base_low": round(base_low, 2),
+		"base_depth_pct": round(base_depth, 2),
+		"distance_from_high_pct": round(distance_from_high, 2),
+		"recent_range_pct": round(recent_range, 2),
+		"vol_dry_up": vol_dry_up,
+		"candles": n,
+		"reason": (
+			f"Surge {ipo_surge:.1f}% in {ipo_high_idx + 1} sessions, "
+			f"base {base_depth:.1f}% deep ({candles_since_high} candles), "
+			f"{distance_from_high:.1f}% below ATH"
+		),
+	}
+
+
 def _vcp_candles_for_symbols(symbols: list, target_date) -> dict:
 	"""Pull last 140 days of {h, l, c, v} per symbol from snapshots in one query."""
 	from datetime import timedelta
@@ -908,10 +1023,14 @@ def _vcp_candles_for_symbols(symbols: list, target_date) -> dict:
 	return out
 
 
-def run_scan_from_snapshot(scan_type: str) -> dict:
+VALID_UNIVERSES = ("Nifty 500", "All NSE", "FnO")
+
+
+def run_scan_from_snapshot(scan_type: str, universe: str = "Nifty 500") -> dict:
 	"""Sub-second screener using the snapshot table.
 
 	Returns {ok, results, total_scanned, snapshot_date}.
+	universe: "Nifty 500" | "All NSE" | "FnO"
 	"""
 	from trading_journal.trading_journal.utils import snapshot as snap
 
@@ -919,20 +1038,31 @@ def run_scan_from_snapshot(scan_type: str) -> dict:
 	if not target:
 		return {"ok": False, "error": "No snapshots in DB. Run Refresh Snapshot first.", "results": [], "total_scanned": 0}
 
-	# Pull the universe row for that date
+	# "All NSE" and "FnO" remove the Nifty 500 constraint; "FnO" post-filters in Python.
+	# "IPO Base" always scans all NSE (IPOs start outside Nifty 500).
+	if universe in ("All NSE", "FnO") or scan_type == "IPO Base":
+		nifty500_filter = ""
+	else:
+		nifty500_filter = "AND is_nifty500 = 1"
 	rows = frappe.db.sql(
-		"""
-		SELECT symbol, industry, close_price, volume,
+		f"""
+		SELECT symbol, industry, is_nifty500, close_price, volume,
 		       sma50, sma150, sma200, sma200_22d_ago,
 		       high_52w, low_52w, pct_from_52w_high, pct_above_52w_low,
 		       ret_3m, ret_6m, ret_9m, ret_12m, rs_score, rs_rating,
 		       range_22d_pct, range_22d_high, range_22d_low, vol_ratio_10_20
 		FROM `tabStock Daily Snapshot`
-		WHERE date = %s
+		WHERE date = %s {nifty500_filter}
 		""",
 		(target.isoformat(),),
 		as_dict=True,
 	)
+
+	# Post-filter to F&O universe if requested
+	if universe == "FnO" and scan_type != "FnO Momentum":
+		fno = get_fno_symbols()
+		rows = [r for r in rows if r["symbol"] in fno]
+
 	total_scanned = len(rows)
 	companies = _company_name_map()
 	results = []
@@ -1152,6 +1282,40 @@ def run_scan_from_snapshot(scan_type: str) -> dict:
 				return (0, 0, x["vcp_tightness"])
 		results.sort(key=_is_sort_key)
 
+	elif scan_type == "IPO Base":
+		# IPO base: stocks with limited history (recent listings) forming a tight
+		# consolidation after the initial post-listing surge.
+		# Defaults to All NSE (new IPOs start outside Nifty 500).
+		all_syms = [r["symbol"] for r in rows]
+		candles_by_sym = _all_candles_for_symbols(all_syms, target)
+		row_by_sym = {r["symbol"]: r for r in rows}
+		for sym, candles in candles_by_sym.items():
+			r = row_by_sym.get(sym)
+			if not r:
+				continue
+			ib = _detect_ipo_base(candles)
+			if not ib.get("is_ipo_base"):
+				continue
+			ev = _evaluate_trend_template_from_snapshot(r)
+			results.append({
+				"symbol": sym,
+				"company_name": companies.get(sym, sym),
+				"current_price": flt(r["close_price"]),
+				"passed_count": ev["passed"],
+				"rs_rating": flt(r.get("rs_rating")),
+				"pct_from_52w_high": flt(r.get("pct_from_52w_high")),
+				"pct_above_52w_low": flt(r.get("pct_above_52w_low")),
+				"vcp_tightness": flt(ib.get("distance_from_high_pct")),
+				"criteria_json": json.dumps({
+					"ipo_base": ib,
+					"trend_template_passed": ev["passed"],
+					"industry": r.get("industry") or "",
+					"is_nifty500": bool(r.get("is_nifty500")),
+				}, default=str),
+			})
+		# Tightest base closest to the IPO high first
+		results.sort(key=lambda x: (x["vcp_tightness"], -x["rs_rating"]))
+
 	return {
 		"ok": True,
 		"results": results,
@@ -1162,7 +1326,7 @@ def run_scan_from_snapshot(scan_type: str) -> dict:
 
 # ─────────────────────── main scan loop (snapshot-backed) ───────────────────────
 
-def _scan(run_name: str, scan_type: str):
+def _scan(run_name: str, scan_type: str, universe: str = "Nifty 500"):
 	"""Sub-second worker. Reads pre-computed snapshots from DB, applies filter, saves."""
 	doc = frappe.get_doc("Screener Run", run_name)
 	doc.status = "Running"
@@ -1173,7 +1337,7 @@ def _scan(run_name: str, scan_type: str):
 	frappe.db.commit()
 
 	try:
-		out = run_scan_from_snapshot(scan_type)
+		out = run_scan_from_snapshot(scan_type, universe=universe)
 		if not out.get("ok"):
 			raise RuntimeError(out.get("error") or "Snapshot query failed")
 		results = out["results"]
@@ -1187,7 +1351,8 @@ def _scan(run_name: str, scan_type: str):
 			doc.passed_count = sum(1 for r in results if r["passed_count"] == 8)
 		else:
 			doc.passed_count = len(results)
-		doc.universe = f"Nifty 500 ({out['snapshot_date']})"
+		actual_universe = "All NSE" if scan_type == "IPO Base" else universe
+		doc.universe = f"{actual_universe} ({out['snapshot_date']})"
 		doc.status = "Completed"
 		doc.completed_at = now_datetime()
 		doc.progress_message = f"Done. {doc.passed_count} symbols passed."
@@ -1208,7 +1373,7 @@ def _scan(run_name: str, scan_type: str):
 ALL_SCAN_TYPES = (
 	"Trend Template", "VCP", "Turnaround",
 	"Rocket Base", "Intraday Momentum", "FnO Momentum",
-	"Intraday Short",
+	"Intraday Short", "IPO Base",
 )
 
 
@@ -1364,14 +1529,16 @@ def scheduled_daily_scan_all():
 
 
 @frappe.whitelist()
-def start_scan(scan_type: str = "Trend Template") -> dict:
+def start_scan(scan_type: str = "Trend Template", universe: str = "Nifty 500") -> dict:
 	"""Create a Screener Run and queue the worker. Returns the run name."""
 	if scan_type not in ALL_SCAN_TYPES:
 		return {"ok": False, "error": f"Unknown scan_type: {scan_type}"}
+	if universe not in VALID_UNIVERSES:
+		universe = "Nifty 500"
 	doc = frappe.new_doc("Screener Run")
 	doc.scan_type = scan_type
 	doc.status = "Queued"
-	doc.universe = "Nifty 500"
+	doc.universe = universe
 	doc.run_at = now_datetime()
 	doc.insert(ignore_permissions=True)
 	frappe.db.commit()
@@ -1382,6 +1549,7 @@ def start_scan(scan_type: str = "Trend Template") -> dict:
 		timeout=1800,
 		run_name=doc.name,
 		scan_type=scan_type,
+		universe=universe,
 		now=False,
 	)
 	return {"ok": True, "run_name": doc.name, "scan_type": scan_type}
@@ -1623,3 +1791,231 @@ def latest_run(scan_type: str = "Trend Template") -> dict:
 	if not rows:
 		return {"ok": True, "run_name": None}
 	return get_run_status(rows[0].name)
+
+
+@frappe.whitelist()
+def get_market_breadth() -> dict:
+	"""Market breadth stats from latest Nifty 500 snapshot — for dashboard pulse cards."""
+	from trading_journal.trading_journal.utils.snapshot import latest_snapshot_date
+
+	target = latest_snapshot_date()
+	if not target:
+		return {"ok": False}
+
+	row = frappe.db.sql(
+		"""
+		SELECT
+			COUNT(*) AS total,
+			SUM(close_price > sma50)     AS above_sma50,
+			SUM(close_price > sma150)    AS above_sma150,
+			SUM(close_price > sma200)    AS above_sma200,
+			SUM(pct_from_52w_high >= -5) AS near_52w_high,
+			SUM(rs_rating >= 70)         AS rs_strong,
+			ROUND(AVG(rs_rating), 1)     AS avg_rs
+		FROM `tabStock Daily Snapshot`
+		WHERE date = %s AND is_nifty500 = 1
+		""",
+		target.isoformat(),
+		as_dict=True,
+	)
+	if not row:
+		return {"ok": False}
+	r = row[0]
+	total = int(r["total"] or 1)
+
+	prev_row = frappe.db.sql(
+		"SELECT MAX(date) AS d FROM `tabStock Daily Snapshot` WHERE date < %s AND is_nifty500 = 1",
+		target.isoformat(),
+	)
+	prev_date = prev_row[0][0] if prev_row else None
+
+	advancing = declining = 0
+	if prev_date:
+		ad = frappe.db.sql(
+			"""
+			SELECT
+				SUM(t.close_price > y.close_price) AS adv,
+				SUM(t.close_price < y.close_price) AS dec_
+			FROM `tabStock Daily Snapshot` t
+			JOIN `tabStock Daily Snapshot` y
+			  ON y.symbol = t.symbol AND y.date = %s AND y.is_nifty500 = 1
+			WHERE t.date = %s AND t.is_nifty500 = 1
+			""",
+			(str(prev_date), target.isoformat()),
+		)
+		if ad:
+			advancing = int(ad[0][0] or 0)
+			declining = int(ad[0][1] or 0)
+
+	vcp_row = frappe.db.sql(
+		"""
+		SELECT SUM(passed_count) AS cnt
+		FROM `tabScreener Run`
+		WHERE scan_type IN ('VCP', 'VCP All NSE')
+		  AND status = 'Completed'
+		  AND DATE(completed_at) = %s
+		""",
+		target.isoformat(),
+	)
+	vcp_count = int((vcp_row[0][0] or 0) if vcp_row else 0)
+
+	def pct(n):
+		return round(int(n or 0) / total * 100, 1)
+
+	return {
+		"ok": True,
+		"date": target.isoformat(),
+		"total": total,
+		"above_sma50_pct": pct(r["above_sma50"]),
+		"above_sma150_pct": pct(r["above_sma150"]),
+		"above_sma200_pct": pct(r["above_sma200"]),
+		"near_52w_high": int(r["near_52w_high"] or 0),
+		"rs_strong": int(r["rs_strong"] or 0),
+		"avg_rs": float(r["avg_rs"] or 0),
+		"advancing": advancing,
+		"declining": declining,
+		"ad_ratio": round(advancing / max(1, declining), 2),
+		"vcp_setups": vcp_count,
+	}
+
+
+@frappe.whitelist()
+def get_rs_leaders(min_rs: float = 70, max_pct_from_high: float = -20, nifty500_only: int = 1) -> dict:
+	"""Live RS leaderboard from latest snapshot — no background scan needed."""
+	from trading_journal.trading_journal.utils.snapshot import latest_snapshot_date
+	target = latest_snapshot_date()
+	if not target:
+		return {"ok": False, "results": []}
+
+	# Previous date ~5 trading days ago for RS delta
+	prev_rows = frappe.db.sql(
+		"""
+		SELECT date FROM `tabStock Daily Snapshot`
+		WHERE date < %s AND is_nifty500 = 1
+		ORDER BY date DESC LIMIT 1 OFFSET 4
+		""",
+		(target.isoformat(),),
+	)
+	prev_date = str(prev_rows[0][0]) if prev_rows else None
+
+	n500_filter = "AND t.is_nifty500 = 1" if int(nifty500_only) else ""
+
+	if prev_date:
+		rows = frappe.db.sql(
+			f"""
+			SELECT t.symbol, t.close_price, t.rs_rating, t.rs_score,
+			       t.pct_from_52w_high, t.high_52w, t.low_52w,
+			       t.sma50, t.sma150, t.sma200,
+			       t.vol_ratio_10_20, t.range_22d_pct,
+			       p.rs_rating AS prev_rs
+			FROM `tabStock Daily Snapshot` t
+			LEFT JOIN `tabStock Daily Snapshot` p
+			  ON p.symbol = t.symbol AND p.date = %s {n500_filter.replace("t.", "p.")}
+			WHERE t.date = %s {n500_filter}
+			  AND t.rs_rating >= %s
+			  AND t.pct_from_52w_high >= %s
+			ORDER BY t.rs_rating DESC
+			LIMIT 200
+			""",
+			(prev_date, target.isoformat(), flt(min_rs), flt(max_pct_from_high)),
+			as_dict=True,
+		)
+	else:
+		rows = frappe.db.sql(
+			f"""
+			SELECT symbol, close_price, rs_rating, rs_score,
+			       pct_from_52w_high, high_52w, low_52w,
+			       sma50, sma150, sma200,
+			       vol_ratio_10_20, range_22d_pct,
+			       NULL AS prev_rs
+			FROM `tabStock Daily Snapshot`
+			WHERE date = %s {n500_filter}
+			  AND rs_rating >= %s AND pct_from_52w_high >= %s
+			ORDER BY rs_rating DESC LIMIT 200
+			""",
+			(target.isoformat(), flt(min_rs), flt(max_pct_from_high)),
+			as_dict=True,
+		)
+
+	results = []
+	for r in rows:
+		close  = flt(r.close_price)
+		sma50  = flt(r.sma50)
+		sma150 = flt(r.sma150)
+		sma200 = flt(r.sma200)
+		prev_rs = flt(r.prev_rs) if r.prev_rs is not None else None
+		results.append({
+			"symbol":          r.symbol,
+			"price":           close,
+			"rs_rating":       round(flt(r.rs_rating), 1),
+			"rs_delta":        round(flt(r.rs_rating) - prev_rs, 1) if prev_rs is not None else 0,
+			"pct_from_52w_high": round(flt(r.pct_from_52w_high), 2),
+			"high_52w":        flt(r.high_52w),
+			"vol_ratio":       round(flt(r.vol_ratio_10_20), 2),
+			"range_22d_pct":   round(flt(r.range_22d_pct), 2),
+			"above_sma50":     close > sma50,
+			"above_sma150":    close > sma150,
+			"above_sma200":    close > sma200,
+			"sma_aligned":     sma50 > sma150 > sma200,
+		})
+
+	return {"ok": True, "date": target.isoformat(), "total": len(results), "results": results}
+
+
+@frappe.whitelist()
+def get_volume_surge(min_vol_ratio: float = 2.0, min_rs: float = 50, nifty500_only: int = 1, universe: str = "") -> dict:
+	"""Pocket-pivot style volume surge scan — real-time from latest snapshot."""
+	from trading_journal.trading_journal.utils.snapshot import latest_snapshot_date
+	target = latest_snapshot_date()
+	if not target:
+		return {"ok": False, "results": []}
+
+	# universe param takes precedence over legacy nifty500_only
+	if universe in VALID_UNIVERSES:
+		n500_filter = "" if universe in ("All NSE", "FnO") else "AND is_nifty500 = 1"
+	else:
+		n500_filter = "AND is_nifty500 = 1" if int(nifty500_only) else ""
+
+	rows = frappe.db.sql(
+		f"""
+		SELECT symbol, close_price, rs_rating, vol_ratio_10_20,
+		       pct_from_52w_high, high_52w,
+		       sma50, sma150, sma200, range_22d_pct
+		FROM `tabStock Daily Snapshot`
+		WHERE date = %s {n500_filter}
+		  AND vol_ratio_10_20 >= %s
+		  AND rs_rating >= %s
+		  AND close_price > sma50
+		ORDER BY vol_ratio_10_20 DESC
+		LIMIT 150
+		""",
+		(target.isoformat(), flt(min_vol_ratio), flt(min_rs)),
+		as_dict=True,
+	)
+
+	if universe == "FnO":
+		fno = get_fno_symbols()
+		rows = [r for r in rows if r["symbol"] in fno]
+
+	results = []
+	for r in rows:
+		close  = flt(r.close_price)
+		sma50  = flt(r.sma50)
+		sma150 = flt(r.sma150)
+		sma200 = flt(r.sma200)
+		results.append({
+			"symbol":          r.symbol,
+			"price":           close,
+			"rs_rating":       round(flt(r.rs_rating), 1),
+			"vol_ratio":       round(flt(r.vol_ratio_10_20), 2),
+			"pct_from_52w_high": round(flt(r.pct_from_52w_high), 2),
+			"high_52w":        flt(r.high_52w),
+			"range_22d_pct":   round(flt(r.range_22d_pct), 2),
+			"above_sma50":     close > sma50,
+			"above_sma150":    close > sma150,
+			"above_sma200":    close > sma200,
+			"sma_aligned":     sma50 > sma150 > sma200,
+			"near_52w_high":   flt(r.pct_from_52w_high) >= -10,
+		})
+
+	return {"ok": True, "date": target.isoformat(), "total": len(results), "results": results}

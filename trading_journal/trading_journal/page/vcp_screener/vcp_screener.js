@@ -15,6 +15,7 @@ class VcpScreenerPage {
 		this.max_distance = "";
 		this.search = "";
 		this.sector = "";
+		this.universe = "Nifty 500";
 		this._inject_styles();
 		this._render_skeleton();
 		this._bind_controls();
@@ -131,13 +132,21 @@ class VcpScreenerPage {
 					<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-vcp-snap-info" style="color:rgba(255,255,255,0.85); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-vcp-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-vcp-run-all" style="background:#10b981;color:#fff;">Run All 7 Scans</button>
+						<button class="btn-scan" id="tj-vcp-run-all" style="background:#10b981;color:#fff;">Run All 9 Scans</button>
 						<button class="btn-scan" id="tj-vcp-run">Run This Scan</button>
 					</div>
 				</div>
 				<div class="tj-vcp-status" id="tj-vcp-status" style="display: none;"></div>
 				<div class="tj-vcp-summary" id="tj-vcp-summary"></div>
 				<div class="tj-vcp-filters">
+					<div>
+						<label>Universe</label>
+						<select id="tj-vcp-universe">
+							<option value="Nifty 500" selected>Nifty 500</option>
+							<option value="FnO">F&amp;O</option>
+							<option value="All NSE">All NSE</option>
+						</select>
+					</div>
 					<div>
 						<label>Max Distance from Pivot</label>
 						<select id="tj-vcp-max-dist">
@@ -186,6 +195,9 @@ class VcpScreenerPage {
 		$body.find("#tj-vcp-run").on("click", () => this._start_scan());
 		$body.find("#tj-vcp-run-all").on("click", () => this._start_all_scans());
 		$body.find("#tj-vcp-snap-refresh").on("click", () => this._refresh_snapshot());
+		$body.find("#tj-vcp-universe").on("change", (e) => {
+			this.universe = e.target.value || "Nifty 500";
+		});
 		$body.find("#tj-vcp-max-dist").on("change", (e) => {
 			this.max_distance = e.target.value === "" ? "" : parseInt(e.target.value, 10);
 			this._render_results();
@@ -252,7 +264,7 @@ class VcpScreenerPage {
 		$body.find("#tj-vcp-run").prop("disabled", true).text("Queued…");
 		frappe.call({
 			method: "trading_journal.trading_journal.utils.screener.start_scan",
-			args: { scan_type: "VCP" },
+			args: { scan_type: "VCP", universe: this.universe },
 			callback: (r) => {
 				const m = r.message || {};
 				if (!m.ok) {
@@ -279,7 +291,7 @@ class VcpScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Could not start scans", message: m.error || "Unknown error", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 7 Scans");
+					$btnAll.prop("disabled", false).text("Run All 9 Scans");
 					return;
 				}
 				const myRun = (m.run_names || {})["VCP"];
@@ -291,7 +303,7 @@ class VcpScreenerPage {
 				this._poll_status();
 			},
 			error: () => {
-				$btnAll.prop("disabled", false).text("Run All 7 Scans");
+				$btnAll.prop("disabled", false).text("Run All 9 Scans");
 			},
 		});
 	}
@@ -310,7 +322,7 @@ class VcpScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-vcp-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-vcp-run-all").prop("disabled", false).text("Run All 7 Scans");
+						$b.find("#tj-vcp-run-all").prop("disabled", false).text("Run All 9 Scans");
 					}
 				},
 			});

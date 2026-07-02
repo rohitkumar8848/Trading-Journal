@@ -21,6 +21,7 @@ class MomentumScreenerPage {
 		this.min_passed = ""; // empty = no filter, show all
 		this.search = "";
 		this.sector = "";
+		this.universe = "Nifty 500";
 		this._inject_styles();
 		this._render_skeleton();
 		this._bind_controls();
@@ -138,13 +139,21 @@ class MomentumScreenerPage {
 					<div class="actions" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 						<span id="tj-scr-snap-info" style="color:rgba(255,255,255,0.85); font-size:11px;"></span>
 						<button class="btn-scan" id="tj-scr-snap-refresh" style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.4);">↻ Refresh Snapshot</button>
-						<button class="btn-scan" id="tj-scr-run-all" style="background:#10b981;color:#fff;">Run All 7 Scans</button>
+						<button class="btn-scan" id="tj-scr-run-all" style="background:#10b981;color:#fff;">Run All 9 Scans</button>
 						<button class="btn-scan" id="tj-scr-run">Run This Scan</button>
 					</div>
 				</div>
 				<div class="tj-scr-status" id="tj-scr-status" style="display: none;"></div>
 				<div class="tj-scr-summary" id="tj-scr-summary"></div>
 				<div class="tj-scr-filters">
+					<div>
+						<label>Universe</label>
+						<select id="tj-scr-universe">
+							<option value="Nifty 500" selected>Nifty 500</option>
+							<option value="FnO">F&amp;O</option>
+							<option value="All NSE">All NSE</option>
+						</select>
+					</div>
 					<div>
 						<label>Min Rules Passed</label>
 						<select id="tj-scr-min-passed">
@@ -194,6 +203,9 @@ class MomentumScreenerPage {
 		$body.find("#tj-scr-run-all").on("click", () => this._start_all_scans());
 		$body.find("#tj-scr-snap-refresh").on("click", () => this._refresh_snapshot());
 		this._update_snap_info();
+		$body.find("#tj-scr-universe").on("change", (e) => {
+			this.universe = e.target.value || "Nifty 500";
+		});
 		$body.find("#tj-scr-min-passed").on("change", (e) => {
 			this.min_passed = e.target.value === "" ? "" : parseInt(e.target.value, 10);
 			this._render_results();
@@ -233,7 +245,7 @@ class MomentumScreenerPage {
 		$body.find("#tj-scr-run").prop("disabled", true).text("Queued…");
 		frappe.call({
 			method: "trading_journal.trading_journal.utils.screener.start_scan",
-			args: { scan_type: this.opts.scan_type },
+			args: { scan_type: this.opts.scan_type, universe: this.universe },
 			callback: (r) => {
 				const m = r.message || {};
 				if (!m.ok) {
@@ -318,7 +330,7 @@ class MomentumScreenerPage {
 				const m = r.message || {};
 				if (!m.ok) {
 					frappe.msgprint({ title: "Could not start scans", message: m.error || "Unknown error", indicator: "red" });
-					$btnAll.prop("disabled", false).text("Run All 7 Scans");
+					$btnAll.prop("disabled", false).text("Run All 9 Scans");
 					return;
 				}
 				const myRun = (m.run_names || {})[this.opts.scan_type];
@@ -330,7 +342,7 @@ class MomentumScreenerPage {
 				this._poll_status();
 			},
 			error: () => {
-				$btnAll.prop("disabled", false).text("Run All 7 Scans");
+				$btnAll.prop("disabled", false).text("Run All 9 Scans");
 			},
 		});
 	}
@@ -349,7 +361,7 @@ class MomentumScreenerPage {
 					} else {
 						const $b = $(this.page.body);
 						$b.find("#tj-scr-run").prop("disabled", false).text("Run This Scan");
-						$b.find("#tj-scr-run-all").prop("disabled", false).text("Run All 7 Scans");
+						$b.find("#tj-scr-run-all").prop("disabled", false).text("Run All 9 Scans");
 					}
 				},
 			});

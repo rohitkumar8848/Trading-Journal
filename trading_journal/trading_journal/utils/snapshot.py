@@ -74,6 +74,7 @@ def bhavcopy_for_date(d: date) -> dict:
 			text = r.text
 			# NSE columns vary; tolerate spaces in headers
 			rows = list(csv.DictReader(io.StringIO(text)))
+			
 			if not rows:
 				last_err = f"{url}: empty CSV"
 				continue
@@ -101,6 +102,7 @@ def bhavcopy_for_date(d: date) -> dict:
 				return {"ok": True, "rows": out, "date": d, "url": url, "count": len(out)}
 			last_err = f"{url}: parsed 0 EQ rows"
 		except Exception as e:
+			
 			last_err = f"{url}: {e}"
 			continue
 	return {"ok": False, "error": last_err or "no source returned data", "date": d}
@@ -114,8 +116,12 @@ def _industry_map() -> dict:
 	return {row["symbol"]: row.get("industry") or "" for row in uni}
 
 
-def upsert_ohlcv(target_date: date, rows: dict, restrict_to_nifty500: bool = True):
-	"""Bulk INSERT … ON DUPLICATE KEY UPDATE for OHLCV columns. ~500 rows in a single statement."""
+def upsert_ohlcv(target_date: date, rows: dict, restrict_to_nifty500: bool = False):
+	"""Bulk INSERT … ON DUPLICATE KEY UPDATE for OHLCV columns.
+
+	By default stores ALL NSE EQ stocks from the bhavcopy (restrict_to_nifty500=False).
+	Sets is_nifty500=1 for symbols that appear in the Nifty 500 universe.
+	"""
 	uni = screener_mod.get_nifty500_symbols()
 	universe_syms = {r["symbol"]: r.get("industry") or "" for r in uni}
 	target_syms = universe_syms.keys() if restrict_to_nifty500 else rows.keys()
@@ -125,9 +131,11 @@ def upsert_ohlcv(target_date: date, rows: dict, restrict_to_nifty500: bool = Tru
 		if not v:
 			continue
 		name = f"SDS-{sym}-{target_date.isoformat()}"
+		in_n500 = 1 if sym in universe_syms else 0
 		tuples.append((
 			name, sym, target_date.isoformat(),
 			universe_syms.get(sym, ""),
+			in_n500,
 			v.get("open"), v.get("high"), v.get("low"), v.get("close"), v.get("volume") or 0,
 		))
 	if not tuples:
@@ -137,7 +145,7 @@ def upsert_ohlcv(target_date: date, rows: dict, restrict_to_nifty500: bool = Tru
 	now_iso = now_datetime()
 	for i in range(0, len(tuples), CHUNK):
 		batch = tuples[i:i + CHUNK]
-		values_sql = ", ".join(["(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(batch))
+		values_sql = ", ".join(["(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"] * len(batch))
 		params = []
 		for t in batch:
 			params.extend([t[0], now_iso, now_iso, "Administrator", "Administrator", *t[1:]])
@@ -145,10 +153,12 @@ def upsert_ohlcv(target_date: date, rows: dict, restrict_to_nifty500: bool = Tru
 			f"""
 			INSERT INTO `tabStock Daily Snapshot`
 				(name, creation, modified, owner, modified_by,
-				 symbol, date, industry, open_price, high_price, low_price, close_price, volume)
+				 symbol, date, industry, is_nifty500,
+				 open_price, high_price, low_price, close_price, volume)
 			VALUES {values_sql}
 			ON DUPLICATE KEY UPDATE
 				industry = VALUES(industry),
+				is_nifty500 = VALUES(is_nifty500),
 				open_price = VALUES(open_price),
 				high_price = VALUES(high_price),
 				low_price = VALUES(low_price),
@@ -183,13 +193,14 @@ def compute_indicators(target_date: date) -> dict:
 	Reads ~280 trading days of closes from DB, writes back indicator columns to today's row.
 	Returns {"updated": N, "skipped": N}.
 	"""
-	# Pull a wide window of closes (and volumes for the 22d ratio) from DB
-	cutoff = target_date - timedelta(days=400)
+	# Pull a wide window of closes (and volumes for the 22d ratio) from DB.
+	# Restrict to Nifty 500 — non-Nifty stocks get only raw OHLCV, not indicators.
+	cutoff = target_date - timedelta(days=480)
 	rows = frappe.db.sql(
 		"""
 		SELECT symbol, date, close_price, high_price, low_price, volume
 		FROM `tabStock Daily Snapshot`
-		WHERE date >= %s AND date <= %s
+		WHERE date >= %s AND date <= %s AND is_nifty500 = 1
 		ORDER BY symbol, date
 		""",
 		(cutoff.isoformat(), target_date.isoformat()),
@@ -470,6 +481,60 @@ def bootstrap_history(days: int = 280) -> dict:
 		"computed_for": target.isoformat(),
 		"indicators_updated": ind.get("updated"),
 		"duration_sec": round(time.time() - t0, 1),
+	}
+
+
+@frappe.whitelist()
+def migrate_nifty500_flag() -> dict:
+	"""One-time migration: mark all existing snapshot rows as is_nifty500 = 1.
+
+	Safe to re-run — already-correct rows are updated in place with no visible change.
+	Call once after running bench migrate to add the is_nifty500 column.
+	"""
+	frappe.db.sql("UPDATE `tabStock Daily Snapshot` SET is_nifty500 = 1 WHERE is_nifty500 = 0 OR is_nifty500 IS NULL")
+	frappe.db.commit()
+	cnt = frappe.db.sql("SELECT COUNT(*) FROM `tabStock Daily Snapshot` WHERE is_nifty500 = 1")[0][0]
+	return {"ok": True, "marked_nifty500": cnt}
+
+
+@frappe.whitelist()
+def bootstrap_all_nse_history(days: int = 140) -> dict:
+	"""Backfill the last `days` trading days of OHLCV for ALL NSE EQ stocks.
+
+	Fetches each historical bhavcopy file from NSE archives (one HTTP call per day).
+	Nifty 500 symbols get is_nifty500=1; all others get is_nifty500=0.
+	Safe to re-run — ON DUPLICATE KEY UPDATE means no duplicate rows.
+	Typical runtime: ~3-5 minutes for 140 days.
+	"""
+	import time as _time
+	t0 = _time.time()
+
+	# Build list of target trading days (walk back, skip weekends)
+	today = date.today()
+	trading_days = []
+	d = today
+	while len(trading_days) < int(days):
+		d -= timedelta(days=1)
+		if not _is_market_holiday(d):
+			trading_days.append(d)
+
+	written_total = 0
+	failed_days = []
+	for td in trading_days:
+		bhav = bhavcopy_for_date(td)
+		if not bhav.get("ok"):
+			failed_days.append(td.isoformat())
+			continue
+		written = upsert_ohlcv(bhav["date"], bhav["rows"], restrict_to_nifty500=False)
+		written_total += written
+
+	return {
+		"ok": True,
+		"days_fetched": len(trading_days) - len(failed_days),
+		"days_failed": len(failed_days),
+		"failed_dates": failed_days[:10],
+		"rows_written": written_total,
+		"duration_sec": round(_time.time() - t0, 1),
 	}
 
 
